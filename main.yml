@@ -7,5 +7,6 @@
     import_playbook: initial_prep.yml
     import_playbook: create_disk.yml
     import_playbook: create_user.yml
-    include_playbook: NIST_800-171_remediations.yml
+    include_playbook:
+      - NIST_800-171_remediations.yml
     
