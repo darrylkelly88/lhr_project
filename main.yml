@@ -29,6 +29,6 @@
   hosts: localhost
   tasks:
   - name: Include NIST 800-171 remediation tasks
-    include_tasks: NIST_800-171_remediations.yml
+    command: ansible-playbook -i localhost, -c local NIST_800-171_remediations.yml
   
     
