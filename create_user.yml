@@ -1,13 +1,12 @@
 ---
 - name: create a new user for veeam
   hosts: localhost
-  vars:
-    veeam_user: "newuser"
-    veeam_user_password: "p@ssw0rd123"
 
   tasks:
-  - name: Create new user
+  - name: Create new user and generate ssh key
     user:
       name: "{{ veeam_user }}"
       password: "{{ veeam_user_password | password_hash('sha512') }}"
       update_password: on_create
+      generate_ssh_key: yes
+
