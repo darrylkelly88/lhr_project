@@ -38,4 +38,5 @@
 
 - name: import apply_nist
   hosts: localhost
-- import_playbook: apply_NIST.yml
+  tasks:
+    include_tasks: apply_NIST.yml
