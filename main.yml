@@ -1,9 +1,8 @@
 ---
 - name: create a Linux Hardened Repository
   hosts: localhost
-  vars:
-    vars_files: 
-      - vars.yml
+  vars_files: 
+    - vars.yml
 
   tasks:
     - name: debug
