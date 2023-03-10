@@ -8,6 +8,10 @@
         insertafter: '^#- hosts:'
         line: "- hosts: localhost"
   
+- name: degub
+  debug:
+    msg: "here"
+
 - name: run NIST remediations
 - import_playbook: NIST_800-171_remediations.yml
 
