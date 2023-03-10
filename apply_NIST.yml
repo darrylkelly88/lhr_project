@@ -1,4 +1,6 @@
+---
 - name: run NIST remediations
+  hosts: localhost
 - import_playbook: NIST_800-171_remediations.yml
 
 - name: Generate a final results status for NIST compliance
