@@ -36,6 +36,6 @@
         line: "hosts: localhost"
         
 - name: Include NIST 800-171 remediation tasks
-include_playbook: NIST_800-171_remediations.yml
+- include_playbook: NIST_800-171_remediations.yml
   
     
