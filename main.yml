@@ -25,7 +25,10 @@
   roles: 
     - rhel-system-roles.storage
 
-- name: include task
+- name: NIST remediations
   hosts: localhost
-  include_tasks: NIST_800-171_remediations.yml
+  tasks:
+  - name: Include NIST 800-171 remediation tasks
+    include_tasks: NIST_800-171_remediations.yml
+  
     
