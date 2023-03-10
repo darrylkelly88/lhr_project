@@ -34,7 +34,8 @@
         regexp: '^hosts:'
         insertafter: '^#hosts:'
         line: "hosts: localhost"
-  - name: Include NIST 800-171 remediation tasks
-    command: ansible-playbook -i localhost, -c local NIST_800-171_remediations.yml
+        
+- name: Include NIST 800-171 remediation tasks
+include_playbook: NIST_800-171_remediations.yml
   
     
