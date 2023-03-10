@@ -22,7 +22,7 @@
         fs_type: xfs
         mount_point: "{{vol_mount_point}}"    
   roles: 
-    - rhel-system-roles.storag
+    - rhel-system-roles.storage
 
 - name: include task
   hosts: localhost
