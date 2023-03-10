@@ -28,6 +28,12 @@
 - name: NIST remediations
   hosts: localhost
   tasks:
+    - name: edit the target of remediation to local host
+    ansible.builtin.lineinfile:
+      path: NIST_800-171_remediations.yml
+      regexp: '^hosts:'
+      insertafter: '^#hosts:'
+      line: hosts: localhost
   - name: Include NIST 800-171 remediation tasks
     command: ansible-playbook -i localhost, -c local NIST_800-171_remediations.yml
   
