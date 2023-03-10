@@ -1,17 +1,3 @@
-- name: edit NIST remediations to run on localhost
-  hosts: localhost
-  tasks:
-    - name: edit the target of remediation to local host
-      ansible.builtin.lineinfile:
-        path: NIST_800-171_remediations.yml
-        regexp: '^- hosts:'
-        insertafter: '^#- hosts:'
-        line: "- hosts: localhost"
-  
-    - name: degub
-      debug:
-        msg: "here"
-
 - name: run NIST remediations
 - import_playbook: NIST_800-171_remediations.yml
 
