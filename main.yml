@@ -2,20 +2,20 @@
 - name: create a Linux Hardened Repository
   hosts: localhost
   vars:
-    include_vars: vars.yml
+    vars_files: 
+      - vars.yml
 
   tasks:
     - name: run initial set up
       include_tasks: initial_prep.yml 
     - name: create user
       include_tasks: create_user.yml
-      vars:
-        include_vars: vars.yml
       
 - name: format and mount disk
   hosts: localhost
   vars:
-    include_vars: vars.yml
+    vars_files: 
+      - vars.yml
     ansible_python_interpreter: /usr/libexec/platform-python
     storage_volumes:
       - name: "{{vol_name}}"
