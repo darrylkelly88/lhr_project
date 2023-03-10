@@ -1,3 +1,4 @@
+---
 vol_name: backupvol
 vol_mount_point: /mnt/data
 veeam_user: vadmin
