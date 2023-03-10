@@ -26,4 +26,12 @@
     - rhel-system-roles.storage
 
   
-    
+- name: edit NIST remediations so that they will run on localhost
+  hosts: localhost
+  tasks:
+    - name: edit the target of remediation to local host
+      ansible.builtin.lineinfile:
+        path: NIST_800-171_remediations.yml
+        regexp: '^- hosts:'
+        insertafter: '^#- hosts:'
+        line: "- hosts: localhost"    
