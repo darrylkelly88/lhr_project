@@ -35,8 +35,3 @@
         regexp: '^- hosts:'
         insertafter: '^#- hosts:'
         line: "- hosts: localhost"    
-
-- name: import apply_nist
-  hosts: localhost
-  tasks:
-    include_tasks: apply_NIST.yml
