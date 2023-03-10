@@ -7,5 +7,12 @@
 - import_playbook: initial_prep.yml
 - import_playbook: create_disk.yml
 - import_playbook: create_user.yml
-- include: NIST_800-171_remediations.yml
+
+
+
+- name: include task
+  hosts: localhost
+  tasks:
+    - name: include tasks
+      include_tasks: NIST_800-171_remediations.yml
     
