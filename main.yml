@@ -38,6 +38,6 @@
 - name: Include NIST 800-171 remediation tasks
   hosts: localhost
   tasks:
-    - include_tasks: NIST_800-171_remediations.yml
+    - include: NIST_800-171_remediations.yml
   
     
