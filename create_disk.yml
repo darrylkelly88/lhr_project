@@ -9,4 +9,4 @@
         mount_point: "{{vol_mount_point}}"
     
   roles: 
-    - rhel-system-roles.storage:
+    - rhel-system-roles.storage
