@@ -36,7 +36,6 @@
         line: "- hosts: localhost"
         
 - name: Include NIST 800-171 remediation tasks
-  hosts: localhost
   tasks:
     - include: NIST_800-171_remediations.yml
   
