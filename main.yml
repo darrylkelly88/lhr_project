@@ -4,8 +4,8 @@
   vars:
     include_vars: vars.yml
   tasks:
-  include_playbook: initial_prep.yml
-  include_playbook: create_disk.yml
-  include_playbook: create_user.yml
-  include_playbook: NIST_800-171_remediations.yml
+    include_playbook: initial_prep.yml
+    include_playbook: create_disk.yml
+    include_playbook: create_user.yml
+    include_playbook: NIST_800-171_remediations.yml
     
