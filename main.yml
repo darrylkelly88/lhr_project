@@ -9,6 +9,8 @@
       include_tasks: initial_prep.yml 
     - name: create user
       include_tasks: create_user.yml
+      vars:
+        include_vars: vars.yml
       
 - name: format and mount disk
   hosts: localhost
