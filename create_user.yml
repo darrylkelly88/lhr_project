@@ -1,6 +1,6 @@
 ---
 - name: create a new user for veeam
-- hosts: localhost
+  hosts: localhost
   vars:
     veeam_user: "newuser"
     veeam_user_password: "p@ssw0rd123"
