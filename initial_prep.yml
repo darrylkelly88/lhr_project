@@ -19,7 +19,8 @@
 - name: generate an ansible fix for NIST 800-171 compliance based on results in initial_NIST_800-171_scan_results.xml
   command: "oscap xccdf generate fix --fix-type ansible --profile xccdf_org.ssgproject.content_profile_cui --output NIST_800-171_remediations.yml initial_NIST_800-171_scan_results.xml"
 
-
+- name: create compliance report
+  command: "oscap xccdf generate report initial_NIST_800-171_scan_results.xml > initial_NIST_800-171_compliance_report.html"
 
 
 
