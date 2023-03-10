@@ -31,7 +31,5 @@
 
 - name: include task
   hosts: localhost
-  tasks:
-    - name: include tasks
-      include_tasks: NIST_800-171_remediations.yml
+  - import_playbook: NIST_800-171_remediations.yml
     
