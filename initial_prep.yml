@@ -11,7 +11,7 @@
     
     - name: install required ansible collections
       command: ansible-galaxy collection install community.general
-      command: ansible-galaxy collection isntall ansible.posix
+      command: ansible-galaxy collection install ansible.posix
       
     - name: scan system for NIST 800-171 compliance and generate results file
       command: "oscap xccdf eval --profile sccdf_org.ssgproject.content_profile_cui --results initial_NIST_800-171_scan_results.xml /usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml
