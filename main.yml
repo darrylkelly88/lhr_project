@@ -35,3 +35,7 @@
         regexp: '^- hosts:'
         insertafter: '^#- hosts:'
         line: "- hosts: localhost"    
+
+- name: import apply_nist
+  hosts: localhost
+- import_playbook: apply_NIST.yml
