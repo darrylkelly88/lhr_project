@@ -1,0 +1,12 @@
+- name: format and mount disk
+  hosts: localhost
+  vars:
+    storage_volumes:
+      - name: {{vol_name}}
+        type: disk
+        disks: {{vol_disk}}
+        fs_type: xfs
+        mount_point: {{vol_mount_point}}
+    
+  roles: 
+    - rhel-system-roles.storage:
