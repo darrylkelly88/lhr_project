@@ -5,14 +5,10 @@
     - vars.yml
 
   tasks:
-    - name: debug
-      debug:
-        msg: "{{veeam_user}}"
     - name: run initial set up
       include_tasks: initial_prep.yml 
     - name: create user
       include_tasks: create_user.yml
-
       
 - name: format and mount disk
   hosts: localhost
@@ -31,5 +27,5 @@
 
 - name: include task
   hosts: localhost
-  - import_playbook: NIST_800-171_remediations.yml
+  include_tasks: NIST_800-171_remediations.yml
     
