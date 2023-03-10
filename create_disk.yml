@@ -8,7 +8,6 @@
         disks: "{{vol_disk}}"
         fs_type: xfs
         mount_point: "{{vol_mount_point}}"
-        size: "{{vol_size}}"
     
   roles: 
     - rhel-system-roles.storage
