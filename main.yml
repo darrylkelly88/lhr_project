@@ -4,10 +4,13 @@
   vars:
     include_vars: vars.yml
 
-- import_playbook: initial_prep.yml
-- import_playbook: create_disk.yml
-- import_playbook: create_user.yml
-
+  tasks:
+    - name: run initial set up
+      include_tasks: initial_prep.yml 
+    - name: create disk
+      include_tasks: create_disk.yml
+    - name: create user
+      include_tasks: create_user.yml
 
 
 - name: include task
