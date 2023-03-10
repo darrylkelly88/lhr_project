@@ -1,6 +1,7 @@
 ---
 - name: create a Linux Hardened Repository
   hosts: localhost
+  include_vars: vars.yml
   tasks:
     - include_playbook: initial_prep.yml
     - include_playbook: create_disk.yml
