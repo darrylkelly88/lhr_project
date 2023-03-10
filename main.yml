@@ -4,10 +4,10 @@
   vars:
     include_vars: vars.yml
   tasks:
-    import_playbook:
+    - import_playbook:
       - initial_prep.yml
       - create_disk.yml
       - create_user.yml
-    include_playbook:
+    - include_playbook:
       - NIST_800-171_remediations.yml
     
