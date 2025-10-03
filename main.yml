@@ -3,8 +3,7 @@
   hosts: localhost
   vars_files: 
     - vars.yml
-  roles: 
-    - rhel-system-roles.storage
+
   tasks:
 
     ###verify that variables have been set by the user###
@@ -38,8 +37,21 @@
 
     - name: create user
       include_tasks: create_user.yml
-    - name: create disk
-      include_tasks: create_disk.yml
+    - name: format and mount disk
+      vars:
+        storage_pools:
+        - name: "{{lvm_name}}"
+          type: lvm
+          disks: "{{vol_disk}}"
+          volumes:
+            - name: "{{vol_name}}"
+              size: "{{lvm_size}}"
+              mount_point: "{{vol_mount_point}}"
+              fs_type: xfs
+        
+      roles: 
+        - rhel-system-roles.storage
+        
     - name: set permissions
       include_tasks: permissions.yml
 
