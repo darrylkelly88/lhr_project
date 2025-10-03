@@ -1,12 +1,18 @@
 ---
 
-### Neccessary variables to set ###
-vol_disks: #uncomment as neccessary
+###--- Neccessary variables to set ---###
+
+### Defines which block devices to use. Uncomment as neccessary###
+vol_disks: 
 #  - /dev/sdb
 #  - /dev/sdc
 #  - /dev/sdd
-lvm_size:  #sets the size of the LVM to be created. This is essentially the size of the volume that you want to create.
-veeam_user_password: #set the veeam user password here. 
+
+### Sets the total size of the volume to be created, since its LVM it can be larger than the single block device ###
+lvm_size:  
+
+### set the default veeam user password here ###
+veeam_user_password: 
 
 ### Sensible default variables are set here ###
 vol_name: veeam-vol #name of the volume
