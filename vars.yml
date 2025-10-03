@@ -1,4 +1,15 @@
 ---
-vol_name: backupvol
-vol_mount_point: /mnt/data
-veeam_user: vadmin
+
+### Neccessary variables to set ###
+vol_disks: #uncomment as neccessary
+#  - /dev/sdb
+#  - /dev/sdc
+#  - /dev/sdd
+lvm_size:  #sets the size of the LVM to be created
+
+
+### Sensible default variables are set here ###
+vol_name: veeam-vol #name of the volume
+vol_mount_point: /mnt/data #mount point of the volume
+lvm_name: veeam-lvm #name of the LVM.
+veeam_user: vadmin #name of the user created

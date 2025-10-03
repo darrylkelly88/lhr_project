@@ -5,33 +5,41 @@
     - vars.yml
 
   tasks:
+    ###install neccessary content for ansible to work###
     - name: run initial set up
       include_tasks: initial_prep.yml 
+    ###verify that variables have been set by the user###
+    - name: Assert that lvm_size is defined and not empty
+      ansible.builtin.assert:
+        that:
+          - lvm_size is defined
+          - lvm_size | length > 0
+        fail_msg: "You must define 'lvm_size' (e.g. 10g)."
+        success_msg: "lvm_size is defined and valid."
+    - name: Assert that vol_disks is defined and contains at least one disk
+      ansible.builtin.assert:
+        that:
+          - vol_disks is defined
+          - vol_disks | length > 0
+        fail_msg: "You must define 'vol_disks' with at least one disk (e.g. ['/dev/sdb'])."
+        success_msg: "vol_disks is defined and has at least one disk."
+    
+    ###continue if ok###
+
     - name: create user
       include_tasks: create_user.yml
-      
-- name: format and mount disk
-  hosts: localhost
-  vars_files: 
-    - vars.yml
-  vars:
-    ansible_python_interpreter: /usr/libexec/platform-python
-    storage_volumes:
-      - name: "{{vol_name}}"
-        type: disk
-        disks: "{{vol_disk}}"
-        fs_type: xfs
-        mount_point: "{{vol_mount_point}}"    
-  roles: 
-    - rhel-system-roles.storage
+    - name: create disk
+      include_tasks: create_disk.yml
+    - name: set permissions
+      include_tasks: permissions.yml
 
   
-- name: edit NIST remediations so that they will run on localhost
-  hosts: localhost
-  tasks:
-    - name: edit the target of remediation to local host
-      ansible.builtin.lineinfile:
-        path: NIST_800-171_remediations.yml
-        regexp: '^- hosts:'
-        insertafter: '^#- hosts:'
-        line: "- hosts: localhost"    
+#- name: edit NIST remediations so that they will run on localhost
+#  hosts: localhost
+#  tasks:
+#    - name: edit the target of remediation to local host
+#      ansible.builtin.lineinfile:
+#        path: NIST_800-171_remediations.yml
+#        regexp: '^- hosts:'
+#        insertafter: '^#- hosts:'
+#        line: "- hosts: localhost"    

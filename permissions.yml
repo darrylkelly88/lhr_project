@@ -1,0 +1,9 @@
+---
+- name: Set repository mount point ownership and permissions
+  ansible.builtin.file:
+    path: "{{vol_mount_point}}"
+    state: directory
+    owner: "{{veeam_user}}"
+    group: "{{veeam_user}}"
+    mode: '0700'
+
