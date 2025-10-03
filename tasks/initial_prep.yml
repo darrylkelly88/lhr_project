@@ -23,10 +23,10 @@
     fail_msg: "You must define 'veeam_user_password'."
     success_msg: "veeam_user_password is defined and valid."
 
-- name: ensure required packages are installed
-  yum:
-    name:
-      - scap-security-guide
+- name: Ensure SCAP content is installed
+  ansible.builtin.package:
+    name: scap-security-guide
+    state: present
 
 - name: install ansible collections
   command: ansible-galaxy collection install -r requirements.yml
