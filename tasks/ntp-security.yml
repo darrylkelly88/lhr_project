@@ -1,0 +1,40 @@
+- name: Improve NTP security (chronyd options) on RHEL/Fedora
+  when: ansible_os_family == 'RedHat'
+  block:
+    - name: RHEL - Ensure chronyd starts with -R -F 2
+      ansible.builtin.lineinfile:
+        path: /etc/sysconfig/chronyd
+        regexp: '^\s*OPTIONS='
+        line: 'OPTIONS="-R -F 2"'
+        create: yes
+        backup: yes
+
+    - name: RHEL - Restart chronyd to apply options
+      ansible.builtin.systemd:
+        name: chronyd
+        state: restarted
+        enabled: true
+
+- name: Improve NTP security (chrony options) on Ubuntu
+  when: ansible_distribution == 'Ubuntu'
+  block:
+    - name: Ubuntu - Ensure chrony is installed
+      ansible.builtin.apt:
+        name: chrony
+        state: present
+        update_cache: yes
+
+    - name: Ubuntu - Set DAEMON_OPTS to "-R -F 2"
+      ansible.builtin.lineinfile:
+        path: /etc/default/chrony
+        regexp: '^\s*DAEMON_OPTS='
+        line: 'DAEMON_OPTS="-R -F 2"'
+        create: yes
+        backup: yes
+
+    - name: Ubuntu - Restart and enable chrony
+      ansible.builtin.systemd:
+        name: chrony
+        state: restarted
+        enabled: true
+        daemon_reload: true
