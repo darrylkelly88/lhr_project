@@ -28,6 +28,8 @@
       include_tasks: tasks/create_user.yml
     - name: set permissions
       include_tasks: tasks/permissions.yml
+    - name: enable automatic security updates
+      include_tasks: tasks/enable_auto_security.yml
     - name: run security scan for compliance with DISA STIG
       include_tasks: tasks/security_scan.yml
 

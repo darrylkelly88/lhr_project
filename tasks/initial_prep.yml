@@ -4,7 +4,7 @@
     that:
       - lvm_size is defined
       - lvm_size is not none
-    fail_msg: "You must define 'lvm_size' (e.g. 10g)."
+    fail_msg: "You must define 'lvm_size' (e.g. 10g). in vars.yml"
     success_msg: "lvm_size is defined and valid."
 
 - name: Check that vol_disks variable is defined and contains at least one disk
@@ -12,7 +12,7 @@
     that:
       - vol_disks is defined
       - vol_disks is not none
-    fail_msg: "You must define 'vol_disks' with at least one disk (e.g. ['/dev/sdb'])."
+    fail_msg: "You must define 'vol_disks' with at least one disk (e.g. ['/dev/sdb']) in vars.yml."
     success_msg: "vol_disks is defined and has at least one disk."
 
 - name: Check that veeam_user_password variable is defined and not empty
@@ -20,8 +20,19 @@
     that:
       - veeam_user_password is defined
       - veeam_user_password is not none
-    fail_msg: "You must define 'veeam_user_password'."
+    fail_msg: "You must define 'veeam_user_password' in vars.yml."
     success_msg: "veeam_user_password is defined and valid."
+
+- name: Check that serveradmin_password is defined and not empty if creating admin user
+  ansible.builtin.assert:
+    that:
+      - serveradmin_password is defined
+      - serveradmin_password is not none
+      - (serveradmin_password | string | length) > 0
+    fail_msg: "You must define 'serveradmin_password' in vars.yml."
+    success_msg: "serveradmin_password is defined and valid."
+  when: create_admin_user | default(false) | bool
+
 
 - name: Ensure SCAP content is installed
   ansible.builtin.package:

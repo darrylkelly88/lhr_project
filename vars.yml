@@ -14,10 +14,16 @@ lvm_size:
 ### set the default veeam user password here ###
 veeam_user_password: 
 
+
+### Serveradmin settings ###
+create_admin_user: no
+serveradmin_name: serveradmin
+serveradmin_password:
+
 ### Sensible default variables are set here ###
-vol_name: veeam-vol #name of the volume
+vol_name: veeamvol #name of the volume
 vol_mount_point: /mnt/data #mount point of the volume
-lvm_name: veeam-lvm #name of the LVM.
+lvm_name: veeamlvm #name of the LVM.
 veeam_user: vadmin #name of the user created
 
 ## Variables for security reporting ###

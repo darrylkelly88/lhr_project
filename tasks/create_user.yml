@@ -9,3 +9,22 @@
     system: yes
     shell: /sbin/nologin
     create_home: no
+
+- block:
+    - name: Create server admin user
+      ansible.builtin.user:
+        name: "{{ serveradmin_name }}"
+        password: "{{ serveradmin_password | password_hash('sha512') }}"
+        update_password: on_create
+        generate_ssh_key: yes
+
+    - name: Grant sudo to {{ serveradmin_name }} via sudoers.d
+      ansible.builtin.copy:
+        dest: "/etc/sudoers.d/{{ serveradmin_name }}"
+        owner: root
+        group: root
+        mode: '0440'
+        content: |
+          {{ serveradmin_name }} ALL=(ALL) ALL
+      validate: '/usr/sbin/visudo -cf %s'
+  when: create_admin_user | default(false) | bool
