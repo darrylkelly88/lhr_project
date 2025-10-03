@@ -50,8 +50,8 @@
       cmd: >
         oscap xccdf eval
         --profile "{{ ssg_profile }}"
-        --results "{{ results_file }}"
-        --report "{{ report_file }}"
+        --results "{{ post_fix_results_file }}"
+        --report "{{ post_fix_report_file }}"
         --fetch-remote-resources
         "{{ ssg_ds_file }}"
     ignore_errors: true 
