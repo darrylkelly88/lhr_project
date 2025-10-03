@@ -1,31 +1,6 @@
 ---
-- name: Read the generated remediation playbook
-  ansible.builtin.slurp:
-    path: DISA_STIG_remediations.yml
-  register: scap_fix_raw
-
-# Extract only the tasks from the generated playbook (which is a list of plays)
-- name: Extract remediation tasks from playbook
-  ansible.builtin.set_fact:
-    scap_fix_tasks_yaml: >-
-      {{
-        (
-          (scap_fix_raw.content | b64decode | from_yaml)[0]['tasks']
-        ) | to_nice_yaml
-      }}
-
-- name: Write tasks-only file for include_tasks
-  ansible.builtin.copy:
-    dest: /tmp/scap_fix_tasks.yml
-    mode: '0600'
-    content: "{{ scap_fix_tasks_yaml }}"
-
-# Apply the remediations in the SAME run
-- name: Apply DISA STIG remediations now
-  block:
-    - ansible.builtin.include_tasks: /tmp/scap_fix_tasks.yml
-  become: true
-
+- name: Run the remediation
+  ansible.builtin.command: ansible-playbook -i "localhost," -c local "{{ remediation_file }}"
 
 - name: Compute SSG datastream for this OS
   ansible.builtin.set_fact:
@@ -72,4 +47,4 @@
       --report "{{ post_fix_report_file }}"
       --fetch-remote-resources
       "{{ ssg_ds_file }}"
-  ignore_errors: true  # scan will return non-zero if there are findings
+  ignore_errors: true 

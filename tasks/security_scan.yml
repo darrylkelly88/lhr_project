@@ -57,7 +57,7 @@
 
 - name: edit the target of remediations to local host
   ansible.builtin.lineinfile:
-    path: DISA_STIG_remediations.yml
+    path: "{{remediation_file}}"
     regexp: '^- hosts:'
     insertafter: '^#- hosts:'
     line: "- hosts: localhost"   
