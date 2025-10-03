@@ -1,37 +1,51 @@
----
+# =============================================================================
+# LINUX HARDENED REPOSITORY - VARIABLES
+# =============================================================================
 
-###--- Neccessary variables to set ---###
-
-
-### Defines whether the storage configuration will run
+# --- EXECUTION SWITCHES ------------------------------------------------------
+# Set to yes/true to run storage configuration (LVM + XFS + mount).
 configure_storage: yes
-### Defines which block devices to use. Uncomment as neccessary###
-vol_disks: 
+# Create a local admin user with sudo? (yes/no/true/false)
+create_admin_user: no
+
+# --- STORAGE: DISKS ----------------------------------------------------------
+# List block devices to use for the volume group (uncomment as needed).
+vol_disks:
 #  - /dev/sdb
 #  - /dev/sdc
 #  - /dev/sdd
+#  - /dev/sde
+#  - /dev/sdg
 
-### Sets the total size of the volume to be created, since its LVM it can be larger than the single block device ###
-lvm_size:  
+# --- STORAGE: SIZE -----------------------------------------------------------
+# Total LV size. Examples: "500g", "100%FREE".
+# Can be larger than a single disk (LVM spans PVs).
+lvm_size:
 
-### set the default veeam user password here ###
-veeam_user_password: 
-
-
-### Serveradmin settings ###
-create_admin_user: no
+# --- SECURITY / ACCOUNTS -----------------------------------------------------
+# Default Veeam user password.
+veeam_user_password:
+# Service account name to be used.
+veeam_user: vadmin
+# Username for the local server admin account - with sudo.
 serveradmin_name: serveradmin
+# Password for the admin account.
 serveradmin_password:
 
-### Sensible default variables are set here ###
-vol_name: veeamvol #name of the volume
-vol_mount_point: /mnt/data #mount point of the volume
-lvm_name: veeamlvm #name of the LVM.
-veeam_user: vadmin #name of the user created
+# --- NAMING DEFAULTS ---------------------------------------------------------
+# Logical volume name.
+vol_name: veeamvol
+# Mount point for the filesystem.
+vol_mount_point: /mnt/backupdata
+# Volume group (LVM) name.
+lvm_name: veeamlvm
 
-## Variables for security reporting ###
+# --- COMPLIANCE / SCAP REPORTING --------------------------------------------
+# Path to SSG content (datastreams).
 ssg_dir: /usr/share/xml/scap/ssg/content
+# DISA STIG profile ID.
 ssg_profile: xccdf_org.ssgproject.content_profile_stig
+# Filenames for pre/post scan results and reports.
 results_file: initial_STIG_scan_results.xml
 remediation_file: DISA_STIG_remediations.yml
 report_file: initial_STIG_compliance_report.html
