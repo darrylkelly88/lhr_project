@@ -30,6 +30,4 @@
       include_tasks: tasks/permissions.yml
     - name: run security scan for compliance with DISA STIG
       include_tasks: tasks/security_scan.yml
-    - name: apply fixes and generate new report
-      include_tasks: tasks/apply_fixes.yml
 
