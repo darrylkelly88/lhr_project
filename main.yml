@@ -28,8 +28,13 @@
       include_tasks: tasks/create_user.yml
     - name: set permissions
       include_tasks: tasks/permissions.yml
+    - name: run security scan for compliance with DISA STIG
+      include_tasks: tasks/security_scan.yml
 
- 
+    - name: Apply DISA STIG remediations now
+      block:
+        - ansible.builtin.include_playbook: DISA_STIG_remediations.yml
+      become: true
 #- name: edit NIST remediations so that they will run on localhost
 #  hosts: localhost
 #  tasks:
