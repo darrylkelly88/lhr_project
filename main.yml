@@ -5,8 +5,7 @@
     - vars.yml
 
   tasks:
-
-    ###verify variables are set and install neccessary content###
+    ###verify variables are set and install neccessary dependencies###
     - name: run initial set up
       include_tasks: tasks/initial_prep.yml 
     
