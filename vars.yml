@@ -20,9 +20,11 @@ vol_mount_point: /mnt/data #mount point of the volume
 lvm_name: veeam-lvm #name of the LVM.
 veeam_user: vadmin #name of the user created
 
-
+## Variables for security reporting ###
 ssg_dir: /usr/share/xml/scap/ssg/content
 ssg_profile: xccdf_org.ssgproject.content_profile_stig
 results_file: initial_STIG_scan_results.xml
 remediation_file: DISA_STIG_remediations.yml
 report_file: initial_STIG_compliance_report.html
+post_fix_results_file: post_fix_STIG_scan_results.xml
+post_fix_report_file: post_fix_STIG_compliance_report.html

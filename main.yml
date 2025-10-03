@@ -30,14 +30,6 @@
       include_tasks: tasks/permissions.yml
     - name: run security scan for compliance with DISA STIG
       include_tasks: tasks/security_scan.yml
+    - name: apply fixes and generate new report
+      include_tasks: tasks/apply_fixes.yml
 
-
-#- name: edit NIST remediations so that they will run on localhost
-#  hosts: localhost
-#  tasks:
-#    - name: edit the target of remediation to local host
-#      ansible.builtin.lineinfile:
-#        path: NIST_800-171_remediations.yml
-#        regexp: '^- hosts:'
-#        insertafter: '^#- hosts:'
-#        line: "- hosts: localhost"    
