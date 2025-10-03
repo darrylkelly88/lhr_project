@@ -2,6 +2,9 @@
 
 ###--- Neccessary variables to set ---###
 
+
+### Defines whether the storage configuration will run
+configure_storage: yes
 ### Defines which block devices to use. Uncomment as neccessary###
 vol_disks: 
 #  - /dev/sdb

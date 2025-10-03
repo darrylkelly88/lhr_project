@@ -10,20 +10,21 @@
       include_tasks: tasks/initial_prep.yml 
     
     ###continue if ok###
-    - name: Format and mount disk via storage role
-      ansible.builtin.include_role:
-        name: fedora.linux_system_roles.storage
-      vars:
-        storage_pools:
-          - name: "{{ lvm_name }}"
-            type: lvm
-            disks: "{{ vol_disks }}"
-            volumes:
-              - name: "{{ vol_name }}"
-                size: "{{ lvm_size }}"
-                fs_type: xfs
-                mount_point: "{{ vol_mount_point }}"
-
+    - block:
+      - name: Format and mount disk via storage role
+        ansible.builtin.include_role:
+          name: fedora.linux_system_roles.storage
+        vars:
+          storage_pools:
+            - name: "{{ lvm_name }}"
+              type: lvm
+              disks: "{{ vol_disks }}"
+              volumes:
+                - name: "{{ vol_name }}"
+                  size: "{{ lvm_size }}"
+                  fs_type: xfs
+                  mount_point: "{{ vol_mount_point }}"
+      when: configure_storage | default(false) | bool   
     - name: create user
       include_tasks: tasks/create_user.yml
     - name: set permissions

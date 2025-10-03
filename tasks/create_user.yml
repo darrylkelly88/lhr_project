@@ -26,5 +26,4 @@
         mode: '0440'
         content: |
           {{ serveradmin_name }} ALL=(ALL) ALL
-      validate: '/usr/sbin/visudo -cf %s'
   when: create_admin_user | default(false) | bool
