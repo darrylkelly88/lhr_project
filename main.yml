@@ -30,7 +30,7 @@
         success_msg: "veeam_user_password is defined and valid."
 
     - name: run initial set up
-      include_tasks: initial_prep.yml 
+      include_tasks: tasks/initial_prep.yml 
     ###continue if ok###
     ###install neccessary content for ansible to work###
   roles:
@@ -47,9 +47,9 @@
               fs_type: xfs       
   tasks:
     - name: create user
-      include_tasks: create_user.yml
+      include_tasks: tasks/create_user.yml
     - name: set permissions
-      include_tasks: permissions.yml
+      include_tasks: tasks/permissions.yml
 
   
 #- name: edit NIST remediations so that they will run on localhost
