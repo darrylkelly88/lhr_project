@@ -1,4 +1,27 @@
 ---
+- name: Check that lvm_size variable is defined and not empty
+  ansible.builtin.assert:
+    that:
+      - lvm_size is defined
+      - lvm_size is not none
+    fail_msg: "You must define 'lvm_size' (e.g. 10g)."
+    success_msg: "lvm_size is defined and valid."
+    
+- name: Check that vol_disks variable is defined and contains at least one disk
+  ansible.builtin.assert:
+    that:
+      - vol_disks is defined
+      - vol_disks is not none
+    fail_msg: "You must define 'vol_disks' with at least one disk (e.g. ['/dev/sdb'])."
+    success_msg: "vol_disks is defined and has at least one disk."
+
+- name: Check that veeam_user_password variable is defined and not empty
+  ansible.builtin.assert:
+    that:
+      - veeam_user_password is defined
+      - veeam_user_password is not none
+    fail_msg: "You must define 'veeam_user_password'."
+    success_msg: "veeam_user_password is defined and valid."
 
 - name: ensure required packages are installed
   yum:
