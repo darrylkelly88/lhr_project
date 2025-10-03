@@ -1,4 +1,5 @@
-- name: Configure automatic security updates (RHEL/Fedora & Ubuntu)
+---
+- name: Configure automatic security updates
   hosts: all
   become: yes
   gather_facts: true
