@@ -3,7 +3,7 @@
   hosts: localhost
   vars_files: 
   - vars.yml
-- import_playbook: "{{remediation_file}}"
+- import_playbook: DISA_STIG_remediations.yml
 
 - name: Verify SCAP datastream exists
   ansible.builtin.stat:
