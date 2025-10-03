@@ -1,3 +1,4 @@
+---
 - name: Improve NTP security (chronyd options) on RHEL/Fedora
   when: ansible_os_family == 'RedHat'
   block:
