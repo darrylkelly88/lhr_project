@@ -28,7 +28,7 @@
     name:
       - scap-security-guide
 
-- name: install community.general ansible collection
+- name: install ansible collections
   command: ansible-galaxy collection install -r requirements.yml
 
 
