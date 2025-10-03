@@ -1,15 +1,9 @@
 ---
-- name: Run the remediation
-  ansible.builtin.command: ansible-playbook -i "localhost," -c local "{{ remediation_file }}"
-
-- name: Compute SSG datastream for this OS
-  ansible.builtin.set_fact:
-    ssg_ds_file: >-
-      {{ ssg_dir }}/{{ 
-          (ansible_distribution == 'Ubuntu')
-          | ternary('ssg-ubuntu' ~ (ansible_distribution_version | regex_replace('\\.', '')) ~ '-ds.xml',
-                    'ssg-rhel' ~ ansible_distribution_major_version ~ '-ds.xml')
-      }}
+- name: run NIST remediations
+  hosts: localhost
+  vars_files: 
+  - vars.yml
+- import_playbook: "{{remediation_file}}"
 
 - name: Verify SCAP datastream exists
   ansible.builtin.stat:
