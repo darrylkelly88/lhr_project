@@ -3,7 +3,8 @@
   hosts: localhost
   vars_files: 
     - vars.yml
-
+  roles: 
+    - rhel-system-roles.storage
   tasks:
 
     ###verify that variables have been set by the user###
