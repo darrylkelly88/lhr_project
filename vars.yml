@@ -7,6 +7,9 @@
 configure_storage: yes
 # Create a local admin user with sudo? (yes/no/true/false)
 create_admin_user: no
+# Enable FIPS mode. This is required to acheive 100% DISA STIG compliance. 
+# However is only supported via Red Hat based linux or paid-for Ubuntu Pro
+enable_FIPS: yes
 
 # --- STORAGE: DISKS ----------------------------------------------------------
 # List block devices to use for the volume group (uncomment as needed).

@@ -1,0 +1,35 @@
+---
+- block:
+    - name: RHEL - Check if FIPS is already configured (RHEL)
+      ansible.builtin.stat:
+        path: /etc/system-fips
+      register: rhel_fips_stat
+
+    - name: RHEL - Enable FIPS (RHEL) if not configured
+      ansible.builtin.command: fips-mode-setup --enable
+      when: not rhel_fips_stat.stat.exists
+      register: rhel_fips_enable
+      changed_when: rhel_fips_enable.rc == 0
+  when: ansible_os_family == 'RedHat'
+
+- block:
+    - name: Ubuntu - Ensure ubuntu-advantage-tools is present
+      ansible.builtin.apt:
+        name: ubuntu-advantage-tools
+        state: present
+        update_cache: yes
+
+    - name: Ubuntu - Check Ubuntu Pro attachment status
+      ansible.builtin.command: pro status --format=json
+      register: pro_status
+      changed_when: false
+      failed_when: false
+      
+    - name: Ubuntu - Enable Ubuntu FIPS channel
+      ansible.builtin.command: pro enable {{ ubuntu_fips_channel }} --assume-yes
+      register: pro_enable_fips
+      changed_when: "'enabled' in pro_enable_fips.stdout | lower or pro_enable_fips.rc == 0"
+      failed_when: pro_enable_fips.rc not in [0]
+      # Don't try to enable if already enabled
+      when: "'fips' not in pro_status.stdout | lower or 'status\": \"enabled\"' not in pro_status.stdout | lower"
+  when: ansible_distribution == 'Ubuntu'

@@ -8,7 +8,10 @@
     ###verify variables are set and install neccessary dependencies###
     - name: run initial set up
       include_tasks: tasks/initial_prep.yml 
-    
+    - block:   
+      - name: enable FIPS
+        include_tasks: tasks/enable_FIPS.yml
+      when: enable_FIPS | default(true) | bool
     ###continue if ok###
     - block:
       - name: Format and mount disk via storage role
