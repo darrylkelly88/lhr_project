@@ -37,6 +37,22 @@
     fail_msg: "You must define 'serveradmin_password' in vars.yml."
     success_msg: "serveradmin_password is defined and valid."
   when: create_admin_user | default(false) | bool
+  
+- name: Assert GRUB superuser name is set and not generic
+  ansible.builtin.assert:
+    that:
+      - grub_superuser_name is defined
+      - grub_superuser_name | length > 0
+      - grub_superuser_name | lower not in ['root', 'admin', 'administrator']
+    fail_msg: >
+      Set 'grub_superuser_name' to a non-generic value (not root/admin/administrator).
+
+- name: Assert GRUB superuser password is set
+  ansible.builtin.assert:
+    that:
+      - grub_superuser_password is defined
+      - (grub_superuser_password | string | length) > 0
+    fail_msg: "Set 'grub_superuser_password' to a strong passphrase."
 
 
 - name: Ensure SCAP content is installed

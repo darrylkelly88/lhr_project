@@ -1,0 +1,9 @@
+---
+- name: Set user.max_user_namespaces (runtime + persistent)
+  ansible.builtin.sysctl:
+    name: user.max_user_namespaces
+    value: "{{ user_max_user_namespaces | default(0) }}"
+    state: present
+    reload: yes
+    sysctl_file: /etc/sysctl.d/99-user-namespaces.conf
+    sysctl_set: yes

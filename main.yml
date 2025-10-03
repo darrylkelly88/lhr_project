@@ -11,7 +11,7 @@
     - block:   
       - name: enable FIPS
         include_tasks: tasks/enable_FIPS.yml
-      when: enable_FIPS | default(true) | bool
+      when: enable_FIPS | default(false) | bool
     ###continue if ok###
     - block:
       - name: Format and mount disk via storage role
@@ -30,6 +30,14 @@
       when: configure_storage | default(false) | bool   
     - name: create user
       include_tasks: tasks/create_user.yml
+    - block:
+      - name: create grub users
+        include_tasks: tasks/create_grub_user.yml
+      when: create_grub | default(false) | bool
+    - block:
+      - name: set max number of user namespaces to 0
+        include_tasks: tasks/user_namespaces.yml
+      when: user_namespaces | default(false) | bool
     - name: set permissions
       include_tasks: tasks/permissions.yml
     - name: set NTP security options
