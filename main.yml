@@ -35,13 +35,12 @@
     ###install neccessary content for ansible to work###
     - name: Format and mount disk via storage role
       ansible.builtin.include_role:
-        name: rhel-system-roles.storage   # or redhat.rhel_system_roles.storage
+        name: rhel-system-roles.storage
       vars:
         storage_pools:
           - name: "{{ lvm_name }}"
             type: lvm
-            # supports either a list var (vol_disks) or a single string (vol_disk)
-            disks: "{{ vol_disk }}"
+            disks: "{{ vol_disks }}"
             volumes:
               - name: "{{ vol_name }}"
                 size: "{{ lvm_size }}"
