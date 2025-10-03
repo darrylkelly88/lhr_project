@@ -9,12 +9,12 @@
 
 # ---------- RHEL / Fedora (dnf-automatic) ----------
 - block:
-    - name: Ensure dnf-automatic is installed
+    - name: RHEL - Ensure dnf-automatic is installed
       ansible.builtin.package:
         name: dnf-automatic
         state: present
 
-    - name: Configure /etc/dnf/automatic.conf → security updates only
+    - name: RHEL - Configure /etc/dnf/automatic.conf → security updates only
       ansible.builtin.ini_file:
         path: /etc/dnf/automatic.conf
         section: commands
@@ -22,17 +22,14 @@
         value: security
         backup: yes
 
-    - name: Ensure apply_updates=yes
+    - name: RHEL - Ensure apply_updates=yes
       ansible.builtin.ini_file:
         path: /etc/dnf/automatic.conf
         section: commands
         option: apply_updates
         value: 'yes'
 
-    - name: Collect systemd service facts
-      ansible.builtin.service_facts:
-
-    - name: Enable & start dnf-automatic timers
+    - name: RHEL - Enable & start dnf-automatic timers
       become: yes
       ansible.builtin.systemd:
         name: "{{ item }}"
@@ -46,13 +43,13 @@
 
 # ---------- Ubuntu (unattended-upgrades) ----------
 - block:
-    - name: Install unattended-upgrades
+    - name: Ubuntu - Install unattended-upgrades
       ansible.builtin.apt:
         name: unattended-upgrades
         state: present
         update_cache: yes
 
-    - name: Configure security-only unattended upgrades
+    - name: Ubuntu - Configure security-only unattended upgrades
       ansible.builtin.copy:
         dest: /etc/apt/apt.conf.d/50unattended-upgrades
         mode: '0644'
@@ -64,7 +61,7 @@
           Unattended-Upgrade::Automatic-Reboot "true";
           Unattended-Upgrade::Automatic-Reboot-Time "03:30";
 
-    - name: Enable periodic auto-upgrades
+    - name: Ubuntu - Enable periodic auto-upgrades
       ansible.builtin.copy:
         dest: /etc/apt/apt.conf.d/20auto-upgrades
         mode: '0644'
@@ -74,7 +71,7 @@
           APT::Periodic::Download-Upgradeable-Packages "1";
           APT::Periodic::AutocleanInterval "7";
 
-    - name: Ensure apt timers are enabled and running
+    - name: Ubuntu - Ensure apt timers are enabled and running
       ansible.builtin.systemd:
         name: "{{ item }}"
         enabled: true
