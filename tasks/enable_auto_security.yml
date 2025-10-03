@@ -1,100 +1,94 @@
 ---
-- name: Configure automatic security updates
-  hosts: all
-  become: yes
-  gather_facts: true
+- name: Assert supported OS (RHEL/Fedora with dnf OR Ubuntu)
+  ansible.builtin.assert:
+    that:
+      - (ansible_os_family == 'RedHat' and ansible_pkg_mgr == 'dnf') or (ansible_distribution == 'Ubuntu')
+    fail_msg: >
+      This play supports RHEL/Fedora with dnf and Ubuntu. Detected:
+      {{ ansible_distribution }} {{ ansible_distribution_version }} (pkg_mgr={{ ansible_pkg_mgr }})
 
-  tasks:
-    - name: Assert supported OS (RHEL/Fedora with dnf OR Ubuntu)
-      ansible.builtin.assert:
-        that:
-          - (ansible_os_family == 'RedHat' and ansible_pkg_mgr == 'dnf') or (ansible_distribution == 'Ubuntu')
-        fail_msg: >
-          This play supports RHEL/Fedora with dnf and Ubuntu. Detected:
-          {{ ansible_distribution }} {{ ansible_distribution_version }} (pkg_mgr={{ ansible_pkg_mgr }})
+# ---------- RHEL / Fedora (dnf-automatic) ----------
+- block:
+    - name: Ensure dnf-automatic is installed
+      ansible.builtin.package:
+        name: dnf-automatic
+        state: present
 
-    # ---------- RHEL / Fedora (dnf-automatic) ----------
-    - block:
-        - name: Ensure dnf-automatic is installed
-          ansible.builtin.package:
-            name: dnf-automatic
-            state: present
+    - name: Configure /etc/dnf/automatic.conf → security updates only
+      ansible.builtin.ini_file:
+        path: /etc/dnf/automatic.conf
+        section: commands
+        option: upgrade_type
+        value: security
+        backup: yes
 
-        - name: Configure /etc/dnf/automatic.conf → security updates only
-          ansible.builtin.ini_file:
-            path: /etc/dnf/automatic.conf
-            section: commands
-            option: upgrade_type
-            value: security
-            backup: yes
+    - name: Ensure apply_updates=yes
+      ansible.builtin.ini_file:
+        path: /etc/dnf/automatic.conf
+        section: commands
+        option: apply_updates
+        value: 'yes'
 
-        - name: Ensure apply_updates=yes
-          ansible.builtin.ini_file:
-            path: /etc/dnf/automatic.conf
-            section: commands
-            option: apply_updates
-            value: 'yes'
+    - name: Collect systemd service facts
+      ansible.builtin.service_facts:
 
-        - name: Collect systemd service facts
-          ansible.builtin.service_facts:
+    - name: Determine which dnf-automatic timers exist
+      ansible.builtin.set_fact:
+        dnf_automatic_timers: >-
+          {{
+            ['dnf-automatic-download.timer',
+              'dnf-automatic-install.timer',
+              'dnf-automatic.timer']
+            | select('in', (ansible_facts.services.keys() | list))
+            | list
+          }}
 
-        - name: Determine which dnf-automatic timers exist
-          ansible.builtin.set_fact:
-            dnf_automatic_timers: >-
-              {{
-                ['dnf-automatic-download.timer',
-                 'dnf-automatic-install.timer',
-                 'dnf-automatic.timer']
-                | select('in', (ansible_facts.services.keys() | list))
-                | list
-              }}
+    - name: Enable & start dnf-automatic timers
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: true
+        state: started
+        daemon_reload: true
+      loop: "{{ dnf_automatic_timers }}"
+      when: dnf_automatic_timers | length > 0
+  when: ansible_os_family == 'RedHat' and ansible_pkg_mgr == 'dnf'
 
-        - name: Enable & start dnf-automatic timers
-          ansible.builtin.systemd:
-            name: "{{ item }}"
-            enabled: true
-            state: started
-            daemon_reload: true
-          loop: "{{ dnf_automatic_timers }}"
-          when: dnf_automatic_timers | length > 0
-      when: ansible_os_family == 'RedHat' and ansible_pkg_mgr == 'dnf'
+# ---------- Ubuntu (unattended-upgrades) ----------
+- block:
+    - name: Install unattended-upgrades
+      ansible.builtin.apt:
+        name: unattended-upgrades
+        state: present
+        update_cache: yes
 
-    # ---------- Ubuntu (unattended-upgrades) ----------
-    - block:
-        - name: Install unattended-upgrades
-          ansible.builtin.apt:
-            name: unattended-upgrades
-            state: present
-            update_cache: yes
+    - name: Configure security-only unattended upgrades
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/50unattended-upgrades
+        mode: '0644'
+        content: |
+          Unattended-Upgrade::Allowed-Origins {
+            "${distro_id}:${distro_codename}-security";
+          };
+          Unattended-Upgrade::Remove-Unused-Dependencies "true";
+          Unattended-Upgrade::Automatic-Reboot "true";
+          Unattended-Upgrade::Automatic-Reboot-Time "03:30";
 
-        - name: Configure security-only unattended upgrades
-          ansible.builtin.copy:
-            dest: /etc/apt/apt.conf.d/50unattended-upgrades
-            mode: '0644'
-            content: |
-              Unattended-Upgrade::Allowed-Origins {
-                "${distro_id}:${distro_codename}-security";
-              };
-              Unattended-Upgrade::Remove-Unused-Dependencies "true";
-              Unattended-Upgrade::Automatic-Reboot "true";
-              Unattended-Upgrade::Automatic-Reboot-Time "03:30";
+    - name: Enable periodic auto-upgrades
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        mode: '0644'
+        content: |
+          APT::Periodic::Update-Package-Lists "1";
+          APT::Periodic::Unattended-Upgrade "1";
+          APT::Periodic::Download-Upgradeable-Packages "1";
+          APT::Periodic::AutocleanInterval "7";
 
-        - name: Enable periodic auto-upgrades
-          ansible.builtin.copy:
-            dest: /etc/apt/apt.conf.d/20auto-upgrades
-            mode: '0644'
-            content: |
-              APT::Periodic::Update-Package-Lists "1";
-              APT::Periodic::Unattended-Upgrade "1";
-              APT::Periodic::Download-Upgradeable-Packages "1";
-              APT::Periodic::AutocleanInterval "7";
-
-        - name: Ensure apt timers are enabled and running
-          ansible.builtin.systemd:
-            name: "{{ item }}"
-            enabled: true
-            state: started
-          loop:
-            - apt-daily.timer
-            - apt-daily-upgrade.timer
-      when: ansible_distribution == 'Ubuntu'
+    - name: Ensure apt timers are enabled and running
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: true
+        state: started
+      loop:
+        - apt-daily.timer
+        - apt-daily-upgrade.timer
+  when: ansible_distribution == 'Ubuntu'
