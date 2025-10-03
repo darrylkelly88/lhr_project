@@ -4,7 +4,7 @@
   vars_files: 
     - vars.yml
 
-  tasks:
+  pre_tasks:
 
     ###verify that variables have been set by the user###
     - name: Check that lvm_size variable is defined and not empty
@@ -29,15 +29,12 @@
         fail_msg: "You must define 'veeam_user_password'."
         success_msg: "veeam_user_password is defined and valid."
 
-    
-    ###continue if ok###
-    ###install neccessary content for ansible to work###
     - name: run initial set up
       include_tasks: initial_prep.yml 
-
-    - name: create user
-      include_tasks: create_user.yml
-    - name: format and mount disk
+    ###continue if ok###
+    ###install neccessary content for ansible to work###
+  roles:
+    - role: rhel-system-roles.storage     
       vars:
         storage_pools:
         - name: "{{lvm_name}}"
@@ -47,11 +44,10 @@
             - name: "{{vol_name}}"
               size: "{{lvm_size}}"
               mount_point: "{{vol_mount_point}}"
-              fs_type: xfs
-        
-      roles: 
-        - rhel-system-roles.storage
-        
+              fs_type: xfs       
+  tasks:
+    - name: create user
+      include_tasks: create_user.yml
     - name: set permissions
       include_tasks: permissions.yml
 
