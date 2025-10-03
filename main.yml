@@ -4,7 +4,7 @@
   vars_files: 
     - vars.yml
 
-  pre_tasks:
+  tasks:
 
     ###verify that variables have been set by the user###
     - name: Check that lvm_size variable is defined and not empty
@@ -33,19 +33,21 @@
       include_tasks: tasks/initial_prep.yml 
     ###continue if ok###
     ###install neccessary content for ansible to work###
-  roles:
-    - role: rhel-system-roles.storage     
+    - name: Format and mount disk via storage role
+      ansible.builtin.include_role:
+        name: rhel-system-roles.storage   # or redhat.rhel_system_roles.storage
       vars:
         storage_pools:
-        - name: "{{lvm_name}}"
-          type: lvm
-          disks: "{{vol_disk}}"
-          volumes:
-            - name: "{{vol_name}}"
-              size: "{{lvm_size}}"
-              mount_point: "{{vol_mount_point}}"
-              fs_type: xfs       
-  tasks:
+          - name: "{{ lvm_name }}"
+            type: lvm
+            # supports either a list var (vol_disks) or a single string (vol_disk)
+            disks: "{{ vol_disk }}"
+            volumes:
+              - name: "{{ vol_name }}"
+                size: "{{ lvm_size }}"
+                fs_type: xfs
+                mount_point: "{{ vol_mount_point }}"
+
     - name: create user
       include_tasks: tasks/create_user.yml
     - name: set permissions
