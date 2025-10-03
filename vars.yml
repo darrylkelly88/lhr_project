@@ -5,8 +5,8 @@ vol_disks: #uncomment as neccessary
 #  - /dev/sdb
 #  - /dev/sdc
 #  - /dev/sdd
-lvm_size:  #sets the size of the LVM to be created
-
+lvm_size:  #sets the size of the LVM to be created. This is essentially the size of the volume that you want to create.
+veeam_user_password: #set the veeam user password here. 
 
 ### Sensible default variables are set here ###
 vol_name: veeam-vol #name of the volume
