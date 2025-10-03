@@ -8,6 +8,7 @@
     - name: RHEL - Enable FIPS (RHEL) if not configured
       ansible.builtin.command: fips-mode-setup --enable
       when: not rhel_fips_stat.stat.exists
+      register: rhel_fips_enable
       changed_when: rhel_fips_enable.rc == 0
   when: ansible_os_family == 'RedHat'
 
@@ -23,7 +24,7 @@
       register: pro_status
       changed_when: false
       failed_when: false
-
+      
     - name: Ubuntu - Enable Ubuntu FIPS channel
       ansible.builtin.command: pro enable {{ ubuntu_fips_channel }} --assume-yes
       register: pro_enable_fips
