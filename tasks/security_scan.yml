@@ -44,7 +44,7 @@
       --report "{{ report_file }}"
       --fetch-remote-resources
       "{{ ssg_ds_file }}"
-  ignore_errors: true  # scan will return non-zero if there are findings
+  ignore_errors: true 
 
 - name: Generate Ansible remediation from scan results
   ansible.builtin.command:
