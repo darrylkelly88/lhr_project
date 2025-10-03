@@ -13,7 +13,7 @@
     ###continue if ok###
     - name: Format and mount disk via storage role
       ansible.builtin.include_role:
-        name: rhel-system-roles.storage
+        name: linux-system-roles.storage
       vars:
         storage_pools:
           - name: "{{ lvm_name }}"
@@ -30,7 +30,7 @@
     - name: set permissions
       include_tasks: tasks/permissions.yml
 
-  
+ 
 #- name: edit NIST remediations so that they will run on localhost
 #  hosts: localhost
 #  tasks:

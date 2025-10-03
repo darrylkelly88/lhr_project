@@ -6,7 +6,7 @@
       - lvm_size is not none
     fail_msg: "You must define 'lvm_size' (e.g. 10g)."
     success_msg: "lvm_size is defined and valid."
-    
+
 - name: Check that vol_disks variable is defined and contains at least one disk
   ansible.builtin.assert:
     that:
@@ -27,13 +27,10 @@
   yum:
     name:
       - scap-security-guide
-      - rhel-system-roles
 
 - name: install community.general ansible collection
-  command: ansible-galaxy collection install community.general
+  command: ansible-galaxy collection install -r requirements.yml
 
-- name: install ansible.posix collection
-  command: ansible-galaxy collection install ansible.posix
 
 # - name: scan system for NIST 800-171 compliance and generate results file
 #   command: "oscap xccdf eval --profile xccdf_org.ssgproject.content_profile_cui --results initial_NIST_800-171_scan_results.xml --fetch-remote-resources /usr/share/xml/scap/ssg/content/ssg-rhel8-ds.xml"
