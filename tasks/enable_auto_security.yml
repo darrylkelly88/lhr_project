@@ -32,25 +32,16 @@
     - name: Collect systemd service facts
       ansible.builtin.service_facts:
 
-    - name: Determine which dnf-automatic timers exist
-      ansible.builtin.set_fact:
-        dnf_automatic_timers: >-
-          {{
-            ['dnf-automatic-download.timer',
-              'dnf-automatic-install.timer',
-              'dnf-automatic.timer']
-            | select('in', (ansible_facts.services.keys() | list))
-            | list
-          }}
-
     - name: Enable & start dnf-automatic timers
+      become: yes
       ansible.builtin.systemd:
         name: "{{ item }}"
         enabled: true
         state: started
         daemon_reload: true
-      loop: "{{ dnf_automatic_timers }}"
-      when: dnf_automatic_timers | length > 0
+      loop:
+        - dnf-automatic-download.timer
+        - dnf-automatic-install.timer
   when: ansible_os_family == 'RedHat' and ansible_pkg_mgr == 'dnf'
 
 # ---------- Ubuntu (unattended-upgrades) ----------
