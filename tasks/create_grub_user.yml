@@ -61,12 +61,14 @@
     - name: Regenerate grub.cfg if 01_users changed
       ansible.builtin.command:
         cmd: grub2-mkconfig -o /boot/grub2/grub.cfg
-      
-    - name: Set GRUB superuser password (non-interactive, only if absent)
-#      no_log: true
-      ansible.builtin.shell: |
-        set -o pipefail
-        printf '%s\n%s\n' "{{ grub_superuser_password }}" "{{ grub_superuser_password }}" | grub2-setpassword
-      args:
-        executable: /bin/bash
-  when: ansible_os_family == 'RedHat'
+          
+    - name: Set GRUB superuser password (non-interactive via expect)
+      no_log: true
+      ansible.builtin.expect:
+        command: grub2-setpassword
+        responses:
+          '(?i)enter password': "{{ grub_superuser_password }}"
+          '(?i)confirm password': "{{ grub_superuser_password }}"
+          # If the tool ever asks to overwrite an existing file, answer "n"
+          '(?i)overwrite.*user\.cfg.*\?': "n"
+        timeout: 30
