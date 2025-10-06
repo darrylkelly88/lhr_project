@@ -1,4 +1,36 @@
 - block:
+
+    - name: Check for existing GRUB user.cfg files
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop:
+        - /boot/grub2/user.cfg
+        - "/boot/efi/EFI/{{ ansible_distribution | lower }}/user.cfg"
+        - /boot/efi/EFI/redhat/user.cfg
+        - /boot/efi/EFI/rocky/user.cfg
+        - /boot/efi/EFI/almalinux/user.cfg
+        - /boot/efi/EFI/centos/user.cfg
+        - /boot/efi/EFI/fedora/user.cfg
+      register: usercfg_stats
+      changed_when: false
+      when: create_grub | default(true) | bool
+
+    - name: Collect existing user.cfg paths (if any)
+      ansible.builtin.set_fact:
+        existing_usercfg_paths: "{{ usercfg_stats.results | selectattr('stat.exists') | map(attribute='item') | list }}"
+      when: create_grub | default(true) | bool
+
+    - name: Fail if any GRUB user.cfg exists (custom guidance)
+      ansible.builtin.assert:
+        that:
+          - existing_usercfg_paths | length == 0
+        fail_msg: >-
+          Detected existing GRUB password configuration file(s): {{ existing_usercfg_paths | join(', ') }}.
+          This indicates GRUB is already configured. Continuing would overwrite these settings.
+          If you do NOT want to manage GRUB here, edit vars.yml and set 'create_grub: no', then rerun.
+        success_msg: "No existing GRUB user.cfg found; safe to manage GRUB configuration."
+      when: create_grub | default(true) | bool
+
     - name: Ensure superuser line is correct
       ansible.builtin.lineinfile:
         path: /etc/grub.d/01_users
@@ -30,4 +62,12 @@
       ansible.builtin.command:
         cmd: grub2-mkconfig -o /boot/grub2/grub.cfg
       
-
+    - name: Set GRUB superuser password (non-interactive)
+      no_log: true
+      ansible.builtin.shell: |
+        set -o pipefail
+        printf '%s\n%s\n' "{{ grub_superuser_password }}" "{{ grub_superuser_password }}" | grub2-setpassword
+      args:
+        executable: /bin/bash
+        # Adjust this if you’re on UEFI and using a vendor path; or set grub_usercfg_path beforehand.
+        creates: "{{ grub_usercfg_path | default('/boot/grub2/user.cfg') }}"
