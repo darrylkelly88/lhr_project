@@ -52,6 +52,7 @@
     - block:
       - name: set up SSSD (LDAP/AD Cert verification)
         include_tasks: tasks/SSSD_setup.yml
+      when: setup_SSSD | default(false) | bool
 
     - name: create user
       include_tasks: tasks/create_user.yml
