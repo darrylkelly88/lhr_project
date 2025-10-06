@@ -69,5 +69,4 @@
         printf '%s\n%s\n' "{{ grub_superuser_password }}" "{{ grub_superuser_password }}" | grub2-setpassword
       args:
         executable: /bin/bash
-        creates: "{{ grub_usercfg_path }}"
   when: ansible_os_family == 'RedHat'
