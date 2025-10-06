@@ -60,3 +60,7 @@
     name: scap-security-guide
     state: present
 
+- name: Ensure pexpect is available
+  ansible.builtin.package:
+    name: python3-pexpect
+    state: present
