@@ -7,4 +7,4 @@
     mode: '0440'
     content: |
       %{{ sudo_admin_group | default('wheel') }} ALL=(ALL) TYPE=sysadm_t ROLE=sysadm_r ALL
-  validate: '/usr/sbin/visudo -cf %s'
+    validate: '/usr/sbin/visudo -cf %s'
