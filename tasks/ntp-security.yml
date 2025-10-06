@@ -1,4 +1,22 @@
 ---
+
+- name: Configure Chrony with server directives only (no pool)
+  ansible.builtin.include_role:
+    name: fedora.linux_system_roles.timesync
+  vars:
+    timesync_ntp_provider: chrony
+    timesync_ntp_servers: >-
+      {{
+        ntp_hostnames
+        | map('regex_replace',
+              '^(.*)$',
+              '{"hostname":"\\1","iburst": true,"pool": false}')
+        | map('from_yaml')
+        | list
+      }}
+
+
+
 - name: Improve NTP security (chronyd options) on RHEL/Fedora
   when: ansible_os_family == 'RedHat'
   block:

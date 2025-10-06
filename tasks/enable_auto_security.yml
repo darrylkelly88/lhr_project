@@ -30,7 +30,6 @@
         value: 'yes'
 
     - name: RHEL - Enable & start dnf-automatic timers
-      become: yes
       ansible.builtin.systemd:
         name: "{{ item }}"
         enabled: true

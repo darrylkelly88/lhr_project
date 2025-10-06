@@ -29,6 +29,7 @@
                   size: "{{ lvm_size }}"
                   fs_type: xfs
                   mount_point: "{{ vol_mount_point }}"
+                  mount_options: "nodev,nosuid,noexec,noatime"
       when: configure_storage | default(false) | bool   
     - name: create user
       include_tasks: tasks/create_user.yml
@@ -46,5 +47,7 @@
       include_tasks: tasks/ntp-security.yml
     - name: enable automatic security updates
       include_tasks: tasks/enable_auto_security.yml
+    - name: Elevate SELinux context of sudo
+      include_tasks: tasks/allow_sudo_selinux.yml
 
 

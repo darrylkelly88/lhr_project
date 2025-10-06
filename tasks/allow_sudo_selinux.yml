@@ -1,0 +1,10 @@
+---
+- name: Allow admins to elevate SELinux context via sudo (sysadm_r/sysadm_t)
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ sudoers_selinux_file | default('selinux-sudo') }}"
+    owner: root
+    group: root
+    mode: '0440'
+    content: |
+      %{{ sudo_admin_group | default('wheel') }} ALL=(ALL) TYPE=sysadm_t ROLE=sysadm_r ALL
+  validate: '/usr/sbin/visudo -cf %s'

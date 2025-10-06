@@ -56,6 +56,20 @@ grub_superuser_name: grubuser
 # Create a password for the bootloader user
 grub_superuser_password: 1234!
 
+
+# --- NTP CONFIGURATION -------------------------------------------------------
+# DISA STIG requires specifying NTP servers specifically rather than pools
+# list server names below
+ntp_hostnames:
+  - time.nist.gov
+#  - time.google.com
+#  - foo.example.com
+
+
+
+
+
+
 # --- NAMING DEFAULTS ---------------------------------------------------------
 # Logical volume name.
 vol_name: veeamvol
