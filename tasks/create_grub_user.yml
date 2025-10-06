@@ -1,15 +1,16 @@
----
 - block:
-    - name: Assert inputs
+    # --- Inputs --------------------------------------------------------------
+    - name: Assert GRUB superuser inputs
       ansible.builtin.assert:
         that:
           - grub_superuser_name is defined
           - grub_superuser_name | length > 0
-          - grub_superuser_name | lower not in ['root', 'admin', 'administrator']
+          - grub_superuser_name | lower not in ['root','admin','administrator']
           - grub_superuser_password is defined
           - (grub_superuser_password | string | length) > 0
         fail_msg: "Set non-generic 'grub_superuser_name' and a strong 'grub_superuser_password'."
 
+    # --- Tools ---------------------------------------------------------------
     - name: Ensure grub2 tools are installed
       ansible.builtin.package:
         name:
@@ -17,7 +18,7 @@
           - grub2-tools-extra
         state: present
 
-    # Configure /etc/grub.d/01_users
+    # --- /etc/grub.d/01_users ------------------------------------------------
     - name: Ensure GRUB superuser is set
       ansible.builtin.lineinfile:
         path: /etc/grub.d/01_users
@@ -37,29 +38,56 @@
         mode: '0644'
         backup: yes
 
-    # Generate PBKDF2 hash and write user.cfg (idempotent, no prompts)
+    # --- Choose user.cfg location (UEFI vendor dir if present, else BIOS) ----
     - name: Detect UEFI
       ansible.builtin.stat:
         path: /sys/firmware/efi
       register: efi_stat
 
+    - name: Build candidate EFI vendor directories
+      ansible.builtin.set_fact:
+        efi_vendor_dirs: >-
+          {{
+            [
+              '/boot/efi/EFI/' ~ (ansible_distribution | lower),
+              '/boot/efi/EFI/redhat',
+              '/boot/efi/EFI/rocky',
+              '/boot/efi/EFI/almalinux',
+              '/boot/efi/EFI/centos',
+              '/boot/efi/EFI/fedora'
+            ] if efi_stat.stat.exists else []
+          }}
+
+    - name: Find first existing EFI vendor dir
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      loop: "{{ efi_vendor_dirs }}"
+      register: efi_dir_stats
+      when: efi_vendor_dirs | length > 0
+
     - name: Choose user.cfg path
       ansible.builtin.set_fact:
         grub_usercfg_path: >-
           {{
-            efi_stat.stat.exists
-            | ternary(
-                "/boot/efi/EFI/{{ ansible_distribution | lower }}/user.cfg",
-                "/boot/grub2/user.cfg"
-              )
+            (
+              efi_dir_stats.results
+              | default([])
+              | selectattr('stat.isdir')
+              | selectattr('stat.exists')
+              | map(attribute='stat.path')
+              | list
+              | first
+            ) ~ '/user.cfg'
+            if (efi_dir_stats is defined and (efi_dir_stats.results | selectattr('stat.exists') | list | length) > 0)
+            else '/boot/grub2/user.cfg'
           }}
 
-    - name: Ensure parent dir exists (UEFI path)
-      ansible.builtin.file:
-        path: "{{ grub_usercfg_path | dirname }}"
-        state: directory
-        mode: '0755'
+    - name: Check if user.cfg already exists
+      ansible.builtin.stat:
+        path: "{{ grub_usercfg_path }}"
+      register: usercfg_stat
 
+    # --- Generate PBKDF2 hash & write user.cfg (only if needed) --------------
     - name: Generate PBKDF2 hash for GRUB password
       ansible.builtin.shell: |
         set -o pipefail
@@ -71,6 +99,7 @@
       register: grub_pw_hash
       no_log: true
       changed_when: false
+      when: rotate_grub_password | default(false) | bool or (not usercfg_stat.stat.exists)
 
     - name: Write user.cfg with hashed password
       ansible.builtin.copy:
@@ -79,25 +108,24 @@
         group: root
         mode: '0600'
         content: "GRUB2_PASSWORD={{ grub_pw_hash.stdout | trim }}\n"
+      when: rotate_grub_password | default(false) | bool or (not usercfg_stat.stat.exists)
 
-    # Regenerate grub.cfg (handles BIOS/UEFI)
-    - name: Pick grub.cfg target
+    # --- Regenerate grub.cfg (pick correct target) ---------------------------
+    - name: Build candidate grub.cfg paths
       ansible.builtin.set_fact:
         grub_cfg_candidates: >-
           {{
-            efi_stat.stat.exists
-            | ternary(
-                ["/boot/efi/EFI/{{ ansible_distribution | lower }}/grub.cfg",
-                 "/boot/efi/EFI/redhat/grub.cfg",
-                 "/boot/efi/EFI/rocky/grub.cfg",
-                 "/boot/efi/EFI/almalinux/grub.cfg",
-                 "/boot/efi/EFI/centos/grub.cfg",
-                 "/boot/efi/EFI/fedora/grub.cfg"],
-                ["/boot/grub2/grub.cfg"]
-              )
+            [
+              '/boot/efi/EFI/' ~ (ansible_distribution | lower) ~ '/grub.cfg',
+              '/boot/efi/EFI/redhat/grub.cfg',
+              '/boot/efi/EFI/rocky/grub.cfg',
+              '/boot/efi/EFI/almalinux/grub.cfg',
+              '/boot/efi/EFI/centos/grub.cfg',
+              '/boot/efi/EFI/fedora/grub.cfg'
+            ] if efi_stat.stat.exists else ['/boot/grub2/grub.cfg']
           }}
 
-    - name: Choose first existing grub.cfg path (fallback to BIOS path)
+    - name: Choose grub.cfg path (existing or fallback)
       ansible.builtin.stat:
         path: "{{ item }}"
       loop: "{{ grub_cfg_candidates }}"
@@ -113,4 +141,4 @@
       register: grub_mkcfg
       changed_when: "'Generating grub configuration file' in (grub_mkcfg.stdout | default(''))"
   when: ansible_os_family == 'RedHat'
-
+  become: yes
