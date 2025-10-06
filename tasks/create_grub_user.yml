@@ -38,13 +38,13 @@
         mode: '0644'
         backup: yes
 
-    # --- Choose user.cfg location (UEFI vendor dir if present, else BIOS) ----
+    # --- Choose user.cfg location (pick existing EFI vendor dir; else BIOS) ---
     - name: Detect UEFI
       ansible.builtin.stat:
         path: /sys/firmware/efi
       register: efi_stat
 
-    - name: Build candidate EFI vendor directories
+    - name: Build candidate EFI vendor dirs
       ansible.builtin.set_fact:
         efi_vendor_dirs: >-
           {{
@@ -58,7 +58,7 @@
             ] if efi_stat.stat.exists else []
           }}
 
-    - name: Find first existing EFI vendor dir
+    - name: Stat candidate EFI vendor dirs
       ansible.builtin.stat:
         path: "{{ item }}"
       loop: "{{ efi_vendor_dirs }}"
@@ -67,19 +67,22 @@
 
     - name: Choose user.cfg path
       ansible.builtin.set_fact:
-        grub_usercfg_path: >-
+        efi_vendor_dir: >-
           {{
             (
-              efi_dir_stats.results
-              | default([])
-              | selectattr('stat.isdir')
+              efi_dir_stats.results | default([])
               | selectattr('stat.exists')
+              | selectattr('stat.isdir','defined')
+              | selectattr('stat.isdir')
               | map(attribute='stat.path')
               | list
               | first
-            ) ~ '/user.cfg'
-            if (efi_dir_stats is defined and (efi_dir_stats.results | selectattr('stat.exists') | list | length) > 0)
-            else '/boot/grub2/user.cfg'
+            )
+          }}
+        grub_usercfg_path: >-
+          {{
+            (efi_vendor_dir is defined and efi_vendor_dir)
+            | ternary(efi_vendor_dir ~ '/user.cfg', '/boot/grub2/user.cfg')
           }}
 
     - name: Check if user.cfg already exists
@@ -110,34 +113,11 @@
         content: "GRUB2_PASSWORD={{ grub_pw_hash.stdout | trim }}\n"
       when: rotate_grub_password | default(false) | bool or (not usercfg_stat.stat.exists)
 
-    # --- Regenerate grub.cfg (pick correct target) ---------------------------
-    - name: Build candidate grub.cfg paths
-      ansible.builtin.set_fact:
-        grub_cfg_candidates: >-
-          {{
-            [
-              '/boot/efi/EFI/' ~ (ansible_distribution | lower) ~ '/grub.cfg',
-              '/boot/efi/EFI/redhat/grub.cfg',
-              '/boot/efi/EFI/rocky/grub.cfg',
-              '/boot/efi/EFI/almalinux/grub.cfg',
-              '/boot/efi/EFI/centos/grub.cfg',
-              '/boot/efi/EFI/fedora/grub.cfg'
-            ] if efi_stat.stat.exists else ['/boot/grub2/grub.cfg']
-          }}
-
-    - name: Choose grub.cfg path (existing or fallback)
-      ansible.builtin.stat:
-        path: "{{ item }}"
-      loop: "{{ grub_cfg_candidates }}"
-      register: grub_cfg_stats
-
-    - name: Set chosen grub.cfg path
-      ansible.builtin.set_fact:
-        grub_cfg_path: "{{ (grub_cfg_stats.results | selectattr('stat.exists') | map(attribute='stat.path') | list | first) | default('/boot/grub2/grub.cfg') }}"
-
+    # --- Regenerate GRUB configuration --------------------------------------
+    # RHEL-family uses /boot/grub2/grub.cfg for both BIOS and UEFI.
     - name: Regenerate GRUB configuration
       ansible.builtin.command:
-        cmd: grub2-mkconfig -o "{{ grub_cfg_path }}"
+        cmd: grub2-mkconfig -o /boot/grub2/grub.cfg
       register: grub_mkcfg
       changed_when: "'Generating grub configuration file' in (grub_mkcfg.stdout | default(''))"
   when: ansible_os_family == 'RedHat'
