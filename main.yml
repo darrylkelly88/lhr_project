@@ -8,6 +8,8 @@
     ###verify variables are set and install neccessary dependencies###
     - name: run initial set up
       include_tasks: tasks/initial_prep.yml 
+    - name: run security scan for compliance with DISA STIG
+      include_tasks: tasks/security_scan.yml
     - block:   
       - name: enable FIPS
         include_tasks: tasks/enable_FIPS.yml
@@ -44,6 +46,5 @@
       include_tasks: tasks/ntp-security.yml
     - name: enable automatic security updates
       include_tasks: tasks/enable_auto_security.yml
-    - name: run security scan for compliance with DISA STIG
-      include_tasks: tasks/security_scan.yml
+
 

@@ -1,34 +1,33 @@
 - block:
-    - name: Ensure /etc/grub.d/01_users has the right superuser
+    - name: Ensure superuser line is correct
       ansible.builtin.lineinfile:
         path: /etc/grub.d/01_users
         regexp: '^\s*set\s+superusers=.*$'
         line: 'set superusers="{{ grub_superuser_name }}"'
         create: yes
-        mode: '0755'        # make script executable
+        mode: '0755'
         backup: yes
-      register: set_super_line
 
-    - name: Ensure export superusers is present (after the set line)
+    - name: Ensure export superusers follows superuser line
       ansible.builtin.lineinfile:
         path: /etc/grub.d/01_users
         regexp: '^\s*export\s+superusers\s*$'
         line: 'export superusers'
         insertafter: '^\s*set\s+superusers='
         create: yes
-      register: export_line
 
-    - name: Ensure password_pbkdf2 line uses the same username
+    - name: Ensure password_pbkdf2 line uses the same username (inside heredoc)
       ansible.builtin.lineinfile:
         path: /etc/grub.d/01_users
-        # Match the existing password line that references GRUB2_PASSWORD
-        regexp: '^\s*password_pbkdf2\s+\S+\s+\$\{?GRUB2_PASSWORD\}?'
-        line: 'password_pbkdf2 {{ grub_superuser_name }} ${GRUB2_PASSWORD}'
+        # match either \${GRUB2_PASSWORD} or ${GRUB2_PASSWORD}
+        regexp: '^\s*password_pbkdf2\s+\S+\s+\\?\$\{?GRUB2_PASSWORD\}?'
+        # keep it escaped to avoid shell expansion in an unquoted heredoc
+        line: 'password_pbkdf2 {{ grub_superuser_name }} \${GRUB2_PASSWORD}'
+        insertafter: '^\s*export\s+superusers\s*$'
         create: yes
-      register: pw_line
 
     - name: Regenerate grub.cfg if 01_users changed
       ansible.builtin.command:
         cmd: grub2-mkconfig -o /boot/grub2/grub.cfg
-      when: set_super_line.changed or export_line.changed or pw_line.changed
+      
 
