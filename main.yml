@@ -41,7 +41,7 @@
     - name: set permissions
       include_tasks: tasks/permissions.yml
     - name: set NTP security options
-      include_tasks: tasks/ntp-security
+      include_tasks: tasks/ntp-security.yml
     - name: enable automatic security updates
       include_tasks: tasks/enable_auto_security.yml
     - name: run security scan for compliance with DISA STIG

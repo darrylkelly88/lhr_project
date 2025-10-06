@@ -1,76 +1,103 @@
+---
 - block:
+    - name: Assert inputs
+      ansible.builtin.assert:
+        that:
+          - grub_superuser_name is defined
+          - grub_superuser_name | length > 0
+          - grub_superuser_name | lower not in ['root', 'admin', 'administrator']
+          - grub_superuser_password is defined
+          - (grub_superuser_password | string | length) > 0
+        fail_msg: "Set non-generic 'grub_superuser_name' and a strong 'grub_superuser_password'."
 
-    # --- Ensure tools exist (usually already present) ------------------------
     - name: Ensure grub2 tools are installed
       ansible.builtin.package:
         name:
           - grub2-tools
           - grub2-tools-extra
         state: present
-      when: ansible_os_family == 'RedHat'
 
-    # --- Configure /etc/grub.d/01_users -------------------------------------
-    # Set superusers="<name>"
-    - name: Ensure GRUB superuser line exists in /etc/grub.d/01_users
+    # Configure /etc/grub.d/01_users
+    - name: Ensure GRUB superuser is set
       ansible.builtin.lineinfile:
         path: /etc/grub.d/01_users
         regexp: '^\s*set\s+superusers='
         line: 'set superusers="{{ grub_superuser_name }}"'
         create: yes
-        backup: yes
         mode: '0644'
+        backup: yes
 
-    # Ensure 'export superusers' follows that line
-    - name: Ensure 'export superusers' is present after superusers line
+    - name: Ensure 'export superusers' follows superusers line
       ansible.builtin.lineinfile:
         path: /etc/grub.d/01_users
         regexp: '^\s*export\s+superusers\s*$'
         line: 'export superusers'
         insertafter: '^\s*set\s+superusers='
         create: yes
-        backup: yes
         mode: '0644'
+        backup: yes
 
-    # --- Set the GRUB password (creates user.cfg with PBKDF2 hash) ----------
-    # grub2-setpassword prompts twice; feed it safely. (no_log hides the pass)
-    - name: Configure GRUB superuser password (creates user.cfg)
-      ansible.builtin.shell: |
-        set -o pipefail
-        printf '%s\n%s\n' "{{ grub_superuser_password }}" "{{ grub_superuser_password }}" | grub2-setpassword
-      args:
-        executable: /bin/bash
-      register: grub_pw
-      changed_when: grub_pw.rc == 0
-      failed_when: grub_pw.rc not in [0]
-      no_log: true
-
-    # --- Work out grub.cfg target (BIOS vs UEFI) -----------------------------
-    - name: Check if system is UEFI
+    # Generate PBKDF2 hash and write user.cfg (idempotent, no prompts)
+    - name: Detect UEFI
       ansible.builtin.stat:
         path: /sys/firmware/efi
       register: efi_stat
 
-    - name: Probe common grub.cfg paths
+    - name: Choose user.cfg path
+      ansible.builtin.set_fact:
+        grub_usercfg_path: >-
+          {{
+            efi_stat.stat.exists
+            | ternary(
+                "/boot/efi/EFI/{{ ansible_distribution | lower }}/user.cfg",
+                "/boot/grub2/user.cfg"
+              )
+          }}
+
+    - name: Ensure parent dir exists (UEFI path)
+      ansible.builtin.file:
+        path: "{{ grub_usercfg_path | dirname }}"
+        state: directory
+        mode: '0755'
+
+    - name: Generate PBKDF2 hash for GRUB password
+      ansible.builtin.shell: |
+        set -o pipefail
+        printf '%s\n%s\n' "{{ grub_superuser_password }}" "{{ grub_superuser_password }}" \
+          | grub2-mkpasswd-pbkdf2 \
+          | awk -F': ' '/PBKDF2 hash of your password is/ {print $2}'
+      args:
+        executable: /bin/bash
+      register: grub_pw_hash
+      no_log: true
+      changed_when: false
+
+    - name: Write user.cfg with hashed password
+      ansible.builtin.copy:
+        dest: "{{ grub_usercfg_path }}"
+        owner: root
+        group: root
+        mode: '0600'
+        content: "GRUB2_PASSWORD={{ grub_pw_hash.stdout | trim }}\n"
+
+    # Regenerate grub.cfg (handles BIOS/UEFI)
+    - name: Pick grub.cfg target
       ansible.builtin.set_fact:
         grub_cfg_candidates: >-
           {{
-            (
-              efi_stat.stat.exists
-              | ternary(
-                  [
-                    "/boot/efi/EFI/{{ ansible_distribution | lower }}/grub.cfg",
-                    "/boot/efi/EFI/redhat/grub.cfg",
-                    "/boot/efi/EFI/rocky/grub.cfg",
-                    "/boot/efi/EFI/almalinux/grub.cfg",
-                    "/boot/efi/EFI/centos/grub.cfg",
-                    "/boot/efi/EFI/fedora/grub.cfg"
-                  ],
-                  ["/boot/grub2/grub.cfg"]
-                )
-            )
+            efi_stat.stat.exists
+            | ternary(
+                ["/boot/efi/EFI/{{ ansible_distribution | lower }}/grub.cfg",
+                 "/boot/efi/EFI/redhat/grub.cfg",
+                 "/boot/efi/EFI/rocky/grub.cfg",
+                 "/boot/efi/EFI/almalinux/grub.cfg",
+                 "/boot/efi/EFI/centos/grub.cfg",
+                 "/boot/efi/EFI/fedora/grub.cfg"],
+                ["/boot/grub2/grub.cfg"]
+              )
           }}
 
-    - name: Pick first existing grub.cfg target
+    - name: Choose first existing grub.cfg path (fallback to BIOS path)
       ansible.builtin.stat:
         path: "{{ item }}"
       loop: "{{ grub_cfg_candidates }}"
@@ -80,11 +107,10 @@
       ansible.builtin.set_fact:
         grub_cfg_path: "{{ (grub_cfg_stats.results | selectattr('stat.exists') | map(attribute='stat.path') | list | first) | default('/boot/grub2/grub.cfg') }}"
 
-    # --- Regenerate grub.cfg with our changes --------------------------------
     - name: Regenerate GRUB configuration
       ansible.builtin.command:
         cmd: grub2-mkconfig -o "{{ grub_cfg_path }}"
       register: grub_mkcfg
-      changed_when: "'Generating grub configuration file' in grub_mkcfg.stdout"
-
+      changed_when: "'Generating grub configuration file' in (grub_mkcfg.stdout | default(''))"
   when: ansible_os_family == 'RedHat'
+
