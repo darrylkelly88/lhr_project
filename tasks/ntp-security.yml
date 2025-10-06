@@ -1,20 +1,19 @@
 ---
 
+- name: Build timesync_ntp_servers from ntp_hostnames
+  ansible.builtin.set_fact:
+    timesync_ntp_servers: "{{ (timesync_ntp_servers | default([])) + [ {
+      'hostname': item,
+      'iburst': true,
+      'pool': false} ] }}"
+  loop: "{{ ntp_hostnames }}"
+
 - name: Configure Chrony with server directives only (no pool)
   ansible.builtin.include_role:
     name: fedora.linux_system_roles.timesync
   vars:
     timesync_ntp_provider: chrony
-    timesync_ntp_servers: >-
-      {{
-        ntp_hostnames
-        | map('regex_replace',
-              '^(.*)$',
-              '{"hostname":"\\1","iburst": true,"pool": false}')
-        | map('from_yaml')
-        | list
-      }}
-
+    timesync_ntp_pools: []
 
 
 - name: Improve NTP security (chronyd options) on RHEL/Fedora
