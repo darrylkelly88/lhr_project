@@ -62,12 +62,12 @@
       ansible.builtin.command:
         cmd: grub2-mkconfig -o /boot/grub2/grub.cfg
       
-    - name: Set GRUB superuser password (non-interactive)
-      no_log: true
+    - name: Set GRUB superuser password (non-interactive, only if absent)
+#      no_log: true
       ansible.builtin.shell: |
         set -o pipefail
         printf '%s\n%s\n' "{{ grub_superuser_password }}" "{{ grub_superuser_password }}" | grub2-setpassword
       args:
         executable: /bin/bash
-        # Adjust this if you’re on UEFI and using a vendor path; or set grub_usercfg_path beforehand.
-        creates: "{{ grub_usercfg_path | default('/boot/grub2/user.cfg') }}"
+        creates: "{{ grub_usercfg_path }}"
+  when: ansible_os_family == 'RedHat'
