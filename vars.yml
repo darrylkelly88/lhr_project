@@ -17,13 +17,13 @@
 # Set to yes/true to run storage configuration (LVM + XFS + mount).
 configure_storage: yes
 # Create a local admin user with sudo? (yes/no/true/false)
-create_admin_user: no
+create_admin_user: yes
 # Enable FIPS mode. This is required to acheive 100% DISA STIG compliance. 
 # However is only supported via Red Hat based linux or paid-for Ubuntu Pro
 enable_FIPS: yes
 # Create GRUB user and password. Setting yes will overwrite any existing settings
 # It is neccessary for 100% DISA STIG compliance
-create_grub: no
+create_grub: yes
 # Set max usernamespaces to 0. This will prohibit a machine from running containers
 # If a machine needs to run containers this should be set to no.
 user_namespaces: yes
@@ -31,7 +31,7 @@ user_namespaces: yes
 # --- STORAGE: DISKS ----------------------------------------------------------
 # List block devices to use for the volume group (uncomment as needed).
 vol_disks:
-#  - /dev/sdb
+  - /dev/sdb
 #  - /dev/sdc
 #  - /dev/sdd
 #  - /dev/sde
@@ -40,21 +40,21 @@ vol_disks:
 # --- STORAGE: SIZE -----------------------------------------------------------
 # Total LV size. Examples: "500g", "100%FREE".
 # Can be larger than a single disk (LVM spans PVs).
-lvm_size:
+lvm_size: 25g
 
 # --- SECURITY / ACCOUNTS -----------------------------------------------------
 # Default Veeam user password.
-veeam_user_password:
+veeam_user_password: 1234!
 # Service account name to be used.
 veeam_user: vadmin
 # Username for the local server admin account - with sudo.
 serveradmin_name: serveradmin
 # Password for the admin account.
-serveradmin_password:
+serveradmin_password: 1234!
 # Create a user for the bootloader - cannot be common names like root, admin, administrator
 grub_superuser_name: grubuser
 # Create a password for the bootloader user
-grub_superuser_password: 
+grub_superuser_password: 1234!
 
 # --- NAMING DEFAULTS ---------------------------------------------------------
 # Logical volume name.
