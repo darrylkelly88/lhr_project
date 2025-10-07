@@ -1,7 +1,7 @@
 ---
 
-- name: Create veeam system user
-  user:
+- name: Create veeam system user 
+  ansible.builtin.user:
     name: "{{ veeam_user }}"
     password: "{{ veeam_user_password | password_hash('sha512') }}"
     update_password: on_create
@@ -9,14 +9,21 @@
     system: yes
     shell: /sbin/nologin
     create_home: no
+    password_expire_max: 60
+    password_expire_min: 1
 
 - block:
-    - name: Create server admin user
+    - name: Create server admin user (STIG aging) and add to wheel
       ansible.builtin.user:
         name: "{{ serveradmin_name }}"
         password: "{{ serveradmin_password | password_hash('sha512') }}"
         update_password: on_create
+        create_home: yes
         generate_ssh_key: yes
+        groups: wheel  
+        append: yes   
+        password_expire_max: 60  
+        password_expire_min: 1      
 
     - name: Grant sudo to {{ serveradmin_name }} via sudoers.d
       ansible.builtin.copy:
@@ -26,4 +33,32 @@
         mode: '0440'
         content: |
           {{ serveradmin_name }} ALL=(ALL) ALL
+
+    - name: Check which init files exist for {{ serveradmin_name }}
+      ansible.builtin.stat:
+        path: "{{ _home }}/{{ item }}"
+      loop: "{{ stig_user_init_files }}"
+      register: _admin_inits
+
+    - name: Fix perms on existing {{ serveradmin_name }} init files (0740)
+      ansible.builtin.file:
+        path: "{{ item.stat.path }}"
+        owner: "{{ _user }}"
+        group: "{{ _user }}"
+        mode: '0740'
+      loop: "{{ _admin_inits.results | selectattr('stat.exists') | list }}"
+  vars:
+    _home: "/home/{{ serveradmin_name }}"
+    _user: "{{ serveradmin_name }}"
+    # STIG init files list (we only fix perms if they already exist)
+    stig_user_init_files:
+      - .bash_profile
+      - .bashrc
+      - .bash_login
+      - .profile
+      - .cshrc
+      - .kshrc
+      - .tcshrc
+      - .zprofile
+      - .zshrc
   when: create_admin_user | default(false) | bool

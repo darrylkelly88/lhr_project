@@ -1,11 +1,12 @@
 ---
 
-- name: Build timesync_ntp_servers from ntp_hostnames
+- name: Build timesync_ntp_servers from ntp_hostnames (server, iburst, maxpoll=16)
   ansible.builtin.set_fact:
     timesync_ntp_servers: "{{ (timesync_ntp_servers | default([])) + [ {
       'hostname': item,
       'iburst': true,
-      'pool': false} ] }}"
+      'pool': false,
+      'maxpoll': 16 } ] }}"
   loop: "{{ ntp_hostnames }}"
 
 - name: Configure Chrony with server directives only (no pool)
@@ -15,6 +16,15 @@
     timesync_ntp_provider: chrony
     timesync_ntp_pools: []
 
+- name: Ensure chrony runs in client-only mode
+  ansible.builtin.blockinfile:
+    path: /etc/chrony.conf
+    marker: "# {mark} ANSIBLE MANAGED: DISA STIG chrony hardening"
+    block: |
+      port 0
+      cmdport 0
+    create: true
+    backup: true
 
 - name: Improve NTP security (chronyd options) on RHEL/Fedora
   when: ansible_os_family == 'RedHat'
@@ -27,11 +37,8 @@
         create: yes
         backup: yes
 
-    - name: RHEL - Restart chronyd to apply options
-      ansible.builtin.systemd:
-        name: chronyd
-        state: restarted
-        enabled: true
+
+
 
 - name: Improve NTP security (chrony options) on Ubuntu
   when: ansible_distribution == 'Ubuntu'
