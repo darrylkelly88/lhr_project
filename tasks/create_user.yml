@@ -25,15 +25,6 @@
         password_expire_max: 60  
         password_expire_min: 1      
 
-    - name: Grant sudo to {{ serveradmin_name }} via sudoers.d
-      ansible.builtin.copy:
-        dest: "/etc/sudoers.d/{{ serveradmin_name }}"
-        owner: root
-        group: root
-        mode: '0440'
-        content: |
-          {{ serveradmin_name }} ALL=(ALL) ALL
-
     - name: Check which init files exist for {{ serveradmin_name }}
       ansible.builtin.stat:
         path: "{{ _home }}/{{ item }}"
@@ -61,4 +52,5 @@
       - .tcshrc
       - .zprofile
       - .zshrc
+      - .bash_logout
   when: create_admin_user | default(false) | bool

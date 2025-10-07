@@ -1,0 +1,18 @@
+---
+- name: Ensure OpenSSH client MACs via crypto policies (openssh.config)
+  ansible.builtin.lineinfile:
+    path: /etc/crypto-policies/back-ends/openssh.config
+    regexp: '^\s*#?\s*MACs\s+.*$'
+    line: "MACs hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha2-256,hmac-sha2-512"
+    insertafter: EOF
+    create: true
+    backup: true
+
+- name: Ensure OpenSSH server MACs via crypto policies (opensshserver.config)
+  ansible.builtin.lineinfile:
+    path: /etc/crypto-policies/back-ends/opensshserver.config
+    regexp: '^\s*#?\s*-oMACs=.*$'
+    line: "-oMACs=hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha2-256,hmac-sha2-512"
+    insertafter: EOF
+    create: true
+    backup: true

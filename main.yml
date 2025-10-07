@@ -63,6 +63,12 @@
     - name: Elevate SELinux context of sudo
       include_tasks: tasks/allow_sudo_selinux.yml
 
+    - name: secure ssh
+      includes_tasks: tasks/secure_ssh.yml
+
+    - name: secure postfix 
+      include_tasks: tasks/secure_postfix.yml
+      
     - name: run security scan for compliance with DISA STIG
       include_tasks: tasks/security_scan.yml
 
