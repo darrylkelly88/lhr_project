@@ -12,6 +12,8 @@
     - block:   
       - name: enable FIPS
         include_tasks: tasks/enable_FIPS.yml
+      - name: secure ssh
+        include_tasks: tasks/secure_ssh.yml
       when: enable_FIPS | default(false) | bool
 
     - block:
@@ -63,8 +65,10 @@
     - name: Elevate SELinux context of sudo
       include_tasks: tasks/allow_sudo_selinux.yml
 
-    - name: secure ssh
-      include_tasks: tasks/secure_ssh.yml
+    - block: 
+      - name: disable ssh
+        include_tasks: tasks/disable_ssh.yml
+      when: disable_ssh | default(false) | bool
 
     - name: secure postfix 
       include_tasks: tasks/secure_postfix.yml

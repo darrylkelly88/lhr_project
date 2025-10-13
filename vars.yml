@@ -13,25 +13,68 @@
 
 
 
-# --- EXECUTION SWITCHES ------------------------------------------------------
-# Set to yes/true to run storage configuration (LVM + XFS + mount).
+# --- EXECUTION SWITCHES (yes/no or true/false) --------------------------------
+# This will create a logical volume, format it as XFS and mount it.
+# Set to "yes" or "true" to run storage configuration (LVM + XFS + mount).
+# Set to "no" or "false" if storage has already been configured.
+# Setting to yes will require configuration of the STORAGE: DISKS section below.
 configure_storage: yes
-# Create a local admin user with sudo? (yes/no/true/false)
+
+# This will create a local admin user with sudo permissions.
+# This script will lock down the root account. Without creating an admin user, the only way to administer
+# the system afterwards will be to enter single user mode. Single user mode is a recovery mode 
+# reached by configuring options in the boot menu(grub) via the console. This is arguably more secure
+# but incredibly inconvnient for managing the system.
+# Having an admin user simplifies system administration at the cost of additional minor security
+# risks. Customers can therefore choose how they would prefer to manage the system.
+# The most secure and recommended option is to set this value to no.
+# Configuring to yes will require setting the admin's username and password in the SECURITY / ACCOUNTS section.
+# This uses the serveradmin_name and serveradmin_password variables.
 create_admin_user: yes
-# Enable FIPS mode. This is required to acheive 100% DISA STIG compliance. 
-# However is only supported via Red Hat based linux or paid-for Ubuntu Pro
-enable_FIPS: yes
-# Create GRUB user and password. Setting yes will overwrite any existing settings
-# It is neccessary for 100% DISA STIG compliance
+
+# Disable SSH? This will disble the SSH server and prevent it from starting again at boot.
+# Disabling SSH makes a system more difficult to adminster as it will require console access
+# However it reduces potential security exposure since there are fewer ways to access the system.
+disable_ssh: yes
+
+# Create GRUB user and password. 
+# GRUB is the linux boot loader. Without this set it is possible to gain access to
+# root account of a system without any passwords via the console. Even if the root account
+# has had the password disabled. 
+# Setting yes will overwrite any existing settings that may have been configured.
+# The script will try to detect existing settings and fail if they are detected. But it cannot be relied on.
+# Configuring to yes will require setting the username and password in the SECURITY / ACCOUNTS section.
+# This uses the grub_superuser_name and grub_superuser_password variables. 
 create_grub: yes
-# Set max usernamespaces to 0. This will prohibit a machine from running containers
+
+# Enable FIPS mode? FIPS mode ensures that system cryptography only uses approved algorithms e.g AES, SHA-2, RSA, ECDSA are used.
+# Non compliant algoriths (e.g MD5, RC4 etc) will be disabled or rejected. This may cause incompatibilities if applications use non-compliant algorithms.
+# Once enabled, FIPS cannot be disabled without leaving the system in an inconsistent configuration.
+# If it needs to be disabled it is easier to reinstall and reconfigure the OS.
+# FIPS mode is only supported on RHEL. It may work on Linux distributions
+# in the Red Hat family, but isnt "technically" compliant since they dont inherit RHEL's certifications
+# FIPS mode is recommended.
+enable_FIPS: yes
+
+# Set max usernamespaces to 0? This will prohibit a machine from running containers
 # If a machine needs to run containers this should be set to no.
+# It is recommended to set this to yes.
 user_namespaces: yes
-# Configure NTP to use only the server directive not pools. 
+
+# Configure NTP to use only the server directive not pools?
+# DISA STIG requires that NTP is configured using only specific servers. Not pools of servers.
 # Setting this to yes will overwrite any existing configurations. 
-# Requires specifying NTP servers below
+# If set to yes then hostnames must be provided in the NTP CONFIGURATION section below. Multiple servers can be provided
+# and they will be configured explicitly with the server directive. 
 setup_ntp: yes
-# Will set up SSSD (see section below for more info)
+
+# Set up SSSD?
+# SSSD validates user certificates from AD/LDAP.
+# If not configured this will show as a fail in the DISA STIG report regardless of AD/LDAP integration. 
+# It is recommended that customers do not integrate AD/LDAP with this server.
+# Customers should therefore be given the option to configure this and understand that a fail is expected
+# if not integrating with AD/LDAP. 
+# Setting to yes will require completion of the SSSD Configuration section below.
 setup_SSSD: yes
 
 # --- STORAGE: DISKS ----------------------------------------------------------
@@ -44,7 +87,7 @@ vol_disks:
 #  - /dev/sdg
 
 # Total LV size. Examples: "500g", "100%FREE".
-# Can be larger than a single disk (LVM spans PVs).
+# Can be larger than a single disk if given multiple disks (LVM spans PVs).
 lvm_size: 25g
 # Logical volume name.
 vol_name: veeamvol
@@ -57,10 +100,10 @@ lvm_name: veeamlvm
 
 
 # --- SECURITY / ACCOUNTS -----------------------------------------------------
-# Default Veeam user password.
-veeam_user_password: 1234!
 # Service account name to be used.
 veeam_user: vadmin
+# Default Veeam user password.
+veeam_user_password: 1234!
 # Username for the local server admin account - with sudo.
 serveradmin_name: serveradmin
 # Password for the admin account.
@@ -146,7 +189,7 @@ certmap_rule_name: "rule_4_DISA_STIG"
 # ---------------------------------------------------------------------------
 # This is what will be written into /etc/sssd/sssd.conf (certmap section):
 #
-# TEMPLATE (uses the variables)
+# TEMPLATE (uses the variables denoted by {{ xyz }})
 # [certmap/{{ certmap_domain_id }}/{{ certmap_rule_name }}]
 # matchrule = {{ certmap_matchrule }}
 # maprule  = {{ certmap_maprule }}

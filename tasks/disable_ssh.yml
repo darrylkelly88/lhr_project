@@ -1,0 +1,5 @@
+- name: Disable and stop SSH service
+  ansible.builtin.systemd:
+    name: sshd
+    enabled: false 
+    state: stopped
