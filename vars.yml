@@ -35,6 +35,7 @@ create_admin_user: yes
 # Disable SSH? This will disble the SSH server and prevent it from starting again at boot.
 # Disabling SSH makes a system more difficult to adminster as it will require console access
 # However it reduces potential security exposure since there are fewer ways to access the system.
+# The DISA_STIG security profile recommends that SSH is enabled. Veeam recommend SSH is disabled.
 disable_ssh: yes
 
 # Create GRUB user and password. 

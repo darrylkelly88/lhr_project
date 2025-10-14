@@ -1,4 +1,4 @@
 ---
-- name: run NIST remediations
+- name: Apply DISA STIG remediations
   hosts: localhost
 - import_playbook: DISA_STIG_remediations.yml
