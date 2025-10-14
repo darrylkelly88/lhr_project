@@ -16,6 +16,9 @@
         include_tasks: tasks/secure_ssh.yml
       when: enable_FIPS | default(false) | bool
 
+    - name: create user
+      include_tasks: tasks/create_user.yml
+
     - block:
       - name: Format and mount disk via storage role
         ansible.builtin.include_role:
@@ -54,9 +57,6 @@
       - name: set up SSSD (LDAP/AD Cert verification)
         include_tasks: tasks/SSSD_setup.yml
       when: setup_SSSD | default(false) | bool
-
-    - name: create user
-      include_tasks: tasks/create_user.yml
 
     - name: enable automatic security updates
       include_tasks: tasks/enable_auto_security.yml
