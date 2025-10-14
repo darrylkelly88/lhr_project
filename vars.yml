@@ -5,7 +5,7 @@
 
 
 #========================WARNING WARNING WARNING WARNING=======================
-# This file will be deleted as the final part of the hardening script.
+# This file will be deleted as the final part of the lockdown script.
 # This is to prevent passwords accidentally being left in plain text.
 #========================WARNING WARNING WARNING WARNING=======================
 
@@ -21,7 +21,7 @@
 configure_storage: yes
 
 # This will create a local admin user with sudo permissions.
-# This script will lock down the root account. Without creating an admin user, the only way to administer
+# If you choose to disable root, this script will lock down the root account. Without creating an admin user, the only way to administer
 # the system afterwards will be to enter single user mode. Single user mode is a recovery mode 
 # reached by configuring options in the boot menu(grub) via the console. This is arguably more secure
 # but incredibly inconvnient for managing the system.
@@ -38,6 +38,13 @@ create_admin_user: yes
 # The DISA_STIG security profile recommends that SSH is enabled. Veeam recommend SSH is disabled.
 disable_ssh: yes
 
+# Disable root account password?
+# Disabling the root account password will mean that access to the root account is not possible
+# (unless some other means has been configured) without using single user mode, which is a recovery
+# mode accessed via the boot menu (grub). This is a highly inconvinient way to manage a system.
+# Veeam recommend disabling the root account password.
+disable_root: yes
+
 # Create GRUB user and password. 
 # GRUB is the linux boot loader. Without this set it is possible to gain access to
 # root account of a system without any passwords via the console. Even if the root account
@@ -46,6 +53,7 @@ disable_ssh: yes
 # The script will try to detect existing settings and fail if they are detected. But it cannot be relied on.
 # Configuring to yes will require setting the username and password in the SECURITY / ACCOUNTS section.
 # This uses the grub_superuser_name and grub_superuser_password variables. 
+# This is recommended to be set to yes.
 create_grub: yes
 
 # Enable FIPS mode? FIPS mode ensures that system cryptography only uses approved algorithms e.g AES, SHA-2, RSA, ECDSA are used.
@@ -54,7 +62,7 @@ create_grub: yes
 # If it needs to be disabled it is easier to reinstall and reconfigure the OS.
 # FIPS mode is only supported on RHEL. It may work on Linux distributions
 # in the Red Hat family, but isnt "technically" compliant since they dont inherit RHEL's certifications
-# FIPS mode is recommended.
+# Enabling FIPS mode is recommended.
 enable_FIPS: yes
 
 # Set max usernamespaces to 0? This will prohibit a machine from running containers

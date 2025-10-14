@@ -31,6 +31,8 @@
                   fs_type: xfs
                   mount_point: "{{ vol_mount_point }}"
                   mount_options: "nodev,nosuid,noexec,noatime"
+      - name: set permissions
+        include_tasks: tasks/permissions.yml
       when: configure_storage | default(false) | bool   
 
     - block:
@@ -56,19 +58,11 @@
     - name: create user
       include_tasks: tasks/create_user.yml
 
-    - name: set permissions
-      include_tasks: tasks/permissions.yml
-
     - name: enable automatic security updates
       include_tasks: tasks/enable_auto_security.yml
 
     - name: Elevate SELinux context of sudo
       include_tasks: tasks/allow_sudo_selinux.yml
-
-    - block: 
-      - name: disable ssh
-        include_tasks: tasks/disable_ssh.yml
-      when: disable_ssh | default(false) | bool
 
     - name: secure postfix 
       include_tasks: tasks/secure_postfix.yml

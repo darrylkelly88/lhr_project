@@ -52,7 +52,4 @@
         "{{ ssg_ds_file }}"
     ignore_errors: true 
 
-  - name: Delete vars file
-    ansible.builtin.file:
-      path: "{{ playbook_dir }}/vars.yml"
-      state: absent
+

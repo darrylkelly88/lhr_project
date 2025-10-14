@@ -1,0 +1,25 @@
+---
+- name: Check if root password is locked
+  ansible.builtin.command:
+    cmd: passwd -S root
+  register: root_passwd_status
+  changed_when: false
+  check_mode: no
+
+- name: Lock/disable the root account password (password-based logins)
+  ansible.builtin.command:
+    cmd: passwd -l root
+  when: "' L ' not in root_passwd_status.stdout and not root_passwd_status.stdout.startswith('root L')"
+  register: lock_root
+  changed_when: "'locked' in lock_root.stdout or lock_root.rc == 0"
+
+- name: Confirm root is locked
+  ansible.builtin.shell:
+    cmd: passwd -S root
+  register: root_passwd_status_after
+  changed_when: false
+
+- name: Fail if root password could not be locked
+  ansible.builtin.fail:
+    msg: "Locking the root password failed; passwd output: {{ root_passwd_status_after.stdout }}"
+  when: "' L ' not in root_passwd_status_after.stdout and not root_passwd_status_after.stdout.startswith('root L')"

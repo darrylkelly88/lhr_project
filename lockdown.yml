@@ -1,0 +1,25 @@
+---
+- name: perform final system lockdown
+  hosts: localhost
+  vars_files: 
+    - vars.yml
+
+  tasks:
+
+    - block: 
+      - name: disable ssh
+        include_tasks: tasks/disable_ssh.yml
+      when: disable_ssh | default(false) | bool
+
+    - block: 
+      - name: disable root password
+        include_tasks: tasks/disable_root.yml
+      when: disable_root | default(false) | bool
+
+
+
+
+    - name: Delete vars file
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/vars.yml"
+        state: absent
