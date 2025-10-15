@@ -1,25 +1,34 @@
 ---
-- name: Check if root password is locked
-  ansible.builtin.command:
-    cmd: passwd -S root
-  register: root_passwd_status
-  changed_when: false
-  check_mode: no
+# Ensure pam_securetty is enforced for console logins (blocks root on TTYs)
+- name: Check for /etc/pam.d/login (console login PAM stack)
+  ansible.builtin.stat:
+    path: /etc/pam.d/login
+  register: _pam_login
 
-- name: Lock/disable the root account password (password-based logins)
-  ansible.builtin.command:
-    cmd: passwd -l root
-  when: "' L ' not in root_passwd_status.stdout and not root_passwd_status.stdout.startswith('root L')"
-  register: lock_root
-  changed_when: "'locked' in lock_root.stdout or lock_root.rc == 0"
+- name: Enforce pam_securetty in console login stack
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/login
+    regexp: '^\s*auth\s+required\s+pam_securetty\.so(\s|$)'
+    line: 'auth       required    pam_securetty.so'
+    insertafter: BOF
+    backup: true
+  when: _pam_login.stat.exists
 
-- name: Confirm root is locked
-  ansible.builtin.shell:
-    cmd: passwd -S root
-  register: root_passwd_status_after
-  changed_when: false
+# Empty /etc/securetty so root is allowed on zero TTYs
+- name: Backup existing /etc/securetty (once)
+  ansible.builtin.copy:
+    src: /etc/securetty
+    dest: /root/securetty.backup
+    remote_src: true
+    force: false
+  when: ansible_facts['os_family'] is defined and
+        (ansible_facts['os_family'] | lower) in ['redhat', 'debian', 'suse'] and
+        (lookup('ansible.builtin.fileglob', '/etc/securetty', errors='ignore') | length) > 0
 
-- name: Fail if root password could not be locked
-  ansible.builtin.fail:
-    msg: "Locking the root password failed; passwd output: {{ root_passwd_status_after.stdout }}"
-  when: "' L ' not in root_passwd_status_after.stdout and not root_passwd_status_after.stdout.startswith('root L')"
+- name: Disable root console logins by emptying /etc/securetty
+  ansible.builtin.copy:
+    dest: /etc/securetty
+    content: ""          # empty file → no secure TTYs
+    owner: root
+    group: root
+    mode: "0600"
