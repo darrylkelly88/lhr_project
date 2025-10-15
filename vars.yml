@@ -87,13 +87,20 @@ setup_ntp: yes
 setup_SSSD: yes
 
 # --- STORAGE: DISKS ----------------------------------------------------------
-# List block devices to use for the volume group (uncomment as needed).
+# List block devices to use for the volume group (uncomment as needed, just delete the # as spacing is important in this file).
 vol_disks:
+#  - /dev/nvme0n1
+#  - /dev/nvme1n1
+#  - /dev/nvme2n1
+#  - /dev/sda
   - /dev/sdb
 #  - /dev/sdc
-#  - /dev/sdd
-#  - /dev/sde
-#  - /dev/sdg
+#  - /dev/vda
+#  - /dev/vdb
+#  - /dev/vdc
+#  - /dev/mapper/mpatha
+#  - /dev/mapper/mpathb
+#  - /dev/mapper/mpathc
 
 # Total LV size. Examples: "500g", "100%FREE".
 # Can be larger than a single disk if given multiple disks (LVM spans PVs).
