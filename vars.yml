@@ -231,8 +231,10 @@ ssg_dir: /usr/share/xml/scap/ssg/content
 # DISA STIG profile ID.
 ssg_profile: xccdf_org.ssgproject.content_profile_stig
 # Filenames for pre/post scan results and reports.
-results_file: initial_STIG_scan_results.xml
+results_file: checkpoint_STIG_scan_results.xml
 remediation_file: DISA_STIG_remediations.yml
-report_file: initial_STIG_compliance_report.html
+report_file: checkpoint_STIG_compliance_report.html
 post_fix_results_file: post_fix_STIG_scan_results.xml
-post_fix_report_file: post_fix_STIG_compliance_report.html
+post_fix_report_file: reports/post_fix_STIG_compliance_report.html
+pre_fix_results_file: pre_fix_STIG_scan_results.xml
+pre_fix_report_file: reports/pre_fix_STIG_compliance_report.html
