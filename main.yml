@@ -16,7 +16,7 @@
         include_tasks: tasks/secure_ssh.yml
       when: enable_FIPS | default(false) | bool
 
-    - name: create user
+    - name: create users
       include_tasks: tasks/create_user.yml
 
     - block:
