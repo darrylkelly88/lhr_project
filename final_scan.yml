@@ -89,4 +89,15 @@
       "{{ ssg_ds_file }}"
   ignore_errors: true 
 
+- name: Check reports directory exists
+  ansible.builtin.stat:
+    path: "{{ playbook_dir }}/reports"
+  register: reports_dir_stat
+
+- name: Archive reports/ into a timestamped tar.gz beside the playbook
+  ansible.builtin.archive:
+    path: "{{ playbook_dir }}/reports/"
+    dest: "{{ playbook_dir }}/reports.tar.gz"
+    format: gz           # produces .tar.gz
+  when: reports_dir_stat.stat.exists
 
