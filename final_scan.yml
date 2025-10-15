@@ -5,51 +5,88 @@
   - vars.yml
   tasks:
 
-  - name: Compute SSG datastream for this OS
-    ansible.builtin.set_fact:
-      ssg_ds_file: >-
-        {{ ssg_dir }}/{{ 
-            (ansible_distribution == 'Ubuntu')
-            | ternary('ssg-ubuntu' ~ (ansible_distribution_version | regex_replace('\\.', '')) ~ '-ds.xml',
-                      'ssg-rhel' ~ ansible_distribution_major_version ~ '-ds.xml')
-        }}
+- block:
+  - name: Normalize MACs line order in crypto-policy back-ends
+    ansible.builtin.replace:
+      path: /etc/crypto-policies/back-ends/openssh.config
+      regexp: '^[ \t]*MACs[ \t]+.*$'
+      replace: "MACs hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha2-256,hmac-sha2-512"
+      backup: true
 
-  - name: Verify SCAP datastream exists
-    ansible.builtin.stat:
-      path: "{{ ssg_ds_file }}"
-    register: ssg_ds_stat
+  # 2) If there was no MACs line, ensure it exists once at EOF
+  - name: Ensure MACs line exists once with exact STIG order
+    ansible.builtin.lineinfile:
+      path: /etc/crypto-policies/back-ends/openssh.config
+      regexp: '^[ \t]*MACs[ \t]+'
+      line: "MACs hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha2-256,hmac-sha2-512"
+      insertafter: EOF
+      create: true
+      backup: true
 
-  - name: Fail if SSG datastream is missing
-    ansible.builtin.assert:
-      that:
-        - ssg_ds_stat.stat.exists
-      fail_msg: >
-        Could not find '{{ ssg_ds_file }}'. Ensure 'scap-security-guide' is installed
-        for this OS/version or adjust the mapping.
 
-  - name: Confirm the DISA STIG profile exists in this datastream
-    ansible.builtin.command:
-      cmd: oscap info --profiles "{{ ssg_ds_file }}"
-    register: ssg_profiles
-    changed_when: false
+  - name: Normalize MACs line order in crypto-policy back-ends
+    ansible.builtin.replace:
+      path: /etc/crypto-policies/back-ends/opensshserver.config
+      regexp: '^[ \t]*MACs[ \t]+.*$'
+      replace: "MACs hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha2-256,hmac-sha2-512"
+      backup: true
 
-  - name: Assert DISA STIG profile is available
-    ansible.builtin.assert:
-      that:
-        - ssg_profile in ssg_profiles.stdout
-      fail_msg: >
-        Profile '{{ ssg_profile }}' not found in '{{ ssg_ds_file }}'.
-        Available profiles:\n{{ ssg_profiles.stdout }}
+  # 2) If there was no MACs line, ensure it exists once at EOF
+  - name: Ensure MACs line exists once with exact STIG order
+    ansible.builtin.lineinfile:
+      path: /etc/crypto-policies/back-ends/opensshserver.config
+      regexp: '^[ \t]*MACs[ \t]+'
+      line: "MACs hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha2-256,hmac-sha2-512"
+      insertafter: EOF
+      create: true
+      backup: true
+  when: enable_FIPS | default(false) | bool
 
-  - name: Run DISA STIG scan
-    ansible.builtin.command:
-      cmd: >
-        oscap xccdf eval
-        --profile "{{ ssg_profile }}"
-        --results "{{ post_fix_results_file }}"
-        --report "{{ post_fix_report_file }}"
-        --fetch-remote-resources
-        "{{ ssg_ds_file }}"
-    ignore_errors: true 
+- name: Compute SSG datastream for this OS
+  ansible.builtin.set_fact:
+    ssg_ds_file: >-
+      {{ ssg_dir }}/{{ 
+          (ansible_distribution == 'Ubuntu')
+          | ternary('ssg-ubuntu' ~ (ansible_distribution_version | regex_replace('\\.', '')) ~ '-ds.xml',
+                    'ssg-rhel' ~ ansible_distribution_major_version ~ '-ds.xml')
+      }}
+
+- name: Verify SCAP datastream exists
+  ansible.builtin.stat:
+    path: "{{ ssg_ds_file }}"
+  register: ssg_ds_stat
+
+- name: Fail if SSG datastream is missing
+  ansible.builtin.assert:
+    that:
+      - ssg_ds_stat.stat.exists
+    fail_msg: >
+      Could not find '{{ ssg_ds_file }}'. Ensure 'scap-security-guide' is installed
+      for this OS/version or adjust the mapping.
+
+- name: Confirm the DISA STIG profile exists in this datastream
+  ansible.builtin.command:
+    cmd: oscap info --profiles "{{ ssg_ds_file }}"
+  register: ssg_profiles
+  changed_when: false
+
+- name: Assert DISA STIG profile is available
+  ansible.builtin.assert:
+    that:
+      - ssg_profile in ssg_profiles.stdout
+    fail_msg: >
+      Profile '{{ ssg_profile }}' not found in '{{ ssg_ds_file }}'.
+      Available profiles:\n{{ ssg_profiles.stdout }}
+
+- name: Run DISA STIG scan
+  ansible.builtin.command:
+    cmd: >
+      oscap xccdf eval
+      --profile "{{ ssg_profile }}"
+      --results "{{ post_fix_results_file }}"
+      --report "{{ post_fix_report_file }}"
+      --fetch-remote-resources
+      "{{ ssg_ds_file }}"
+  ignore_errors: true 
 
 
