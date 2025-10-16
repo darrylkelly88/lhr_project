@@ -4,6 +4,21 @@
   vars_files: 
     - vars.yml
 
+
+  pre_tasks:
+    - name: Detect platform-python presence (works on RHEL 8)
+      raw: test -x /usr/libexec/platform-python && echo ok || echo no
+      register: _pp
+      changed_when: false
+
+    - name: Set interpreter per host
+      set_fact:
+        ansible_python_interpreter: >-
+          {{ '/usr/libexec/platform-python' if _pp.stdout.strip() == 'ok' else '/usr/bin/python3' }}
+
+    - name: Now gather facts using the chosen interpreter
+      setup:
+      
   tasks:
     ###verify variables are set and install neccessary dependencies###
     - name: run initial set up
