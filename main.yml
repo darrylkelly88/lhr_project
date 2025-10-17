@@ -3,7 +3,7 @@
   hosts: localhost
   vars_files: 
     - vars.yml
-
+    - SSSD_vars.yml
 
   pre_tasks:
     - name: Detect platform-python presence (works on RHEL 8)
@@ -18,7 +18,7 @@
 
     - name: Now gather facts using the chosen interpreter
       setup:
-      
+
   tasks:
     ###verify variables are set and install neccessary dependencies###
     - name: run initial set up

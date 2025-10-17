@@ -1,0 +1,49 @@
+# Managed by Ansible — edit vars, not this file.
+
+[sssd]
+services = {{ sssd_services | join(',') }}
+domains  = {{ sssd_domain_id }}
+
+[domain/{{ sssd_domain_id }}]
+id_provider       = {{ sssd_provider }}
+cache_credentials = {{ (sssd_cache_credentials | bool) | ternary('True','False') }}
+enumerate         = {{ (sssd_enumerate | bool) | ternary('True','False') }}
+{% if sssd_domain_debug_level is defined %}
+debug_level       = {{ sssd_domain_debug_level }}
+{% endif %}
+
+# -------- AD provider settings --------
+{% if sssd_provider == 'ad' %}
+ad_domain         = {{ ad_domain }}
+{% if ad_servers is defined and ad_servers | trim | length > 0 %}
+ad_server         = {{ ad_servers }}
+{% endif %}
+ldap_id_mapping   = {{ (ldap_id_mapping | default(true) | bool) | ternary('True','False') }}
+{% if ad_site is defined and ad_site | trim | length > 0 %}
+ad_site           = {{ ad_site }}
+{% endif %}
+
+# -------- LDAP provider settings ------
+{% else %}
+ldap_uri          = {{ ldap_uri }}
+ldap_search_base  = {{ ldap_search_base }}
+{% if ldap_schema is defined %}ldap_schema       = {{ ldap_schema }}{% endif %}
+{% if ldap_tls_reqcert is defined %}ldap_tls_reqcert = {{ ldap_tls_reqcert }}{% endif %}
+{% if ldap_tls_cacert is defined %}ldap_tls_cacert  = {{ ldap_tls_cacert }}{% endif %}
+{% endif %}
+
+# -------- Access control --------------
+access_provider   = {{ sssd_access_provider | default('simple') }}
+{% if sssd_simple_allow_users is defined and sssd_simple_allow_users | length > 0 %}
+simple_allow_users = {{ sssd_simple_allow_users | join(',') }}
+{% endif %}
+{% if sssd_simple_allow_groups is defined and sssd_simple_allow_groups | length > 0 %}
+simple_allow_groups = {{ sssd_simple_allow_groups | join(',') }}
+{% endif %}
+
+# -------- CERTMAP (STIG-visible) -----
+# These rules are used to map client certs to directory identities.
+[certmap/{{ certmap_domain_id }}/{{ certmap_rule_name }}]
+matchrule = {{ certmap_matchrule }}
+maprule  = {{ certmap_maprule }}
+domains  = {{ (certmap_search_domains | default([sssd_domain_id])) | join(',') }}

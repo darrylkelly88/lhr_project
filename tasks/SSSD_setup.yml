@@ -1,33 +1,33 @@
 ---
 
-- name: Derive header and domain list
-  ansible.builtin.set_fact:
-    _certmap_header_domain: "{{ certmap_domain_id | default((certmap_search_domains | default([])) | first) }}"
-    _certmap_domain_list: "{{ certmap_search_domains | default([certmap_domain_id]) }}"
+- name: Ensure SSSD packages are present (provider-aware)
+  ansible.builtin.package:
+    name: >-
+      {{
+        (sssd_provider == 'ad')
+        | ternary(['sssd','sssd-ad'], ['sssd','sssd-ldap'])
+      }}
+    state: present
 
-- name: Fail if no domain provided
-  ansible.builtin.fail:
-    msg: "Provide certmap_domain_id OR a non-empty certmap_search_domains list."
-  when: _certmap_header_domain is not defined or (_certmap_header_domain | length) == 0
-
-- name: Ensure /etc/sssd/sssd.conf exists with correct perms
+- name: Ensure /etc/sssd exists
   ansible.builtin.file:
-    path: /etc/sssd/sssd.conf
-    state: touch
+    path: /etc/sssd
+    state: directory
     owner: root
     group: root
-    mode: '0600'
+    mode: "0755"
 
-- name: Insert certmap block into /etc/sssd/sssd.conf (STIG-visible)
-  ansible.builtin.blockinfile:
-    path: /etc/sssd/sssd.conf
-    marker: "# {mark} ANSIBLE SSSD CERTMAP {{ certmap_rule_name }}"
-    create: yes
+- name: Deploy /etc/sssd/sssd.conf from template
+  ansible.builtin.template:
+    src: templates/sssd.conf.j2
+    dest: /etc/sssd/sssd.conf
     owner: root
     group: root
-    mode: '0600'
-    block: |
-      [certmap/{{ _certmap_header_domain }}/{{ certmap_rule_name }}]
-      matchrule = {{ certmap_matchrule }}
-      maprule  = {{ certmap_maprule }}
-      domains  = {{ _certmap_domain_list | join(',') }}
+    mode: "0600"
+  notify: Restart sssd
+
+- name: Validate SSSD configuration
+  ansible.builtin.command: sssctl config-check
+  register: _sssctl
+  changed_when: false
+  failed_when: _sssctl.rc != 0

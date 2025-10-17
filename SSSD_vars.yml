@@ -1,0 +1,137 @@
+
+# --- SSSD Configuration ----------------------------------------------------
+# ---------------------------------------------------------------------------
+
+# --- What SSSD is ---
+# SSSD = System Security Services Daemon. Linux uses it to talk to AD/LDAP for
+# identity, authentication, and access.
+# To be DISA STIG compliant SSSD needs a certmap to validate a presented user certificate.
+
+# Provider type for this host
+sssd_provider: "ad"
+# WHAT: Choose "ad" for Active Directory, or "ldap" for a generic LDAP directory.
+# WHY: Determines which backend options SSSD enables and which vars below are used.
+
+# Core SSSD service toggles
+sssd_services: ["nss", "pam"]
+# WHAT: SSSD sub-services to run. Typical console/SSH auth needs nss,pam.
+# WHY: If you add sudo/ssh/ifp providers later, include them here (e.g., "sudo","ssh").
+
+sssd_cache_credentials: true
+# WHAT: Cache credentials locally.
+# WHY: Allows logins when the directory is temporarily unavailable.
+
+sssd_enumerate: false
+# WHAT: Whether to enumerate all users/groups from the directory.
+# WHY: Keep "false" for performance and to avoid huge group/user lists.
+
+# The SSSD "domain id" used in sssd.conf
+sssd_domain_id: "testing.test"
+# WHAT: Name that appears in [domain/<ID>] and is referenced by certmap "domains".
+# WHERE TO GET: From identity design—usually the AD DNS name or LDAP realm label.
+# NOTE: Must match certmap_domain_id below (or be included in certmap_search_domains).
+
+# ---------------- AD-specific options (used when sssd_provider: "ad") ------
+ad_domain: "TESTING.TEST"
+# WHAT: Kerberos/AD realm in UPPERCASE.
+# WHERE TO GET: From AD team or "realm list"/"dns domain" info.
+
+ad_servers: "dc1.testing.test,dc2.testing.test"
+# WHAT: Comma-separated list of preferred DCs (optional).
+# WHY: If omitted, SSSD discovers DCs via DNS SRV records.
+
+ldap_id_mapping: true
+# WHAT: Let SSSD generate POSIX IDs from AD SIDs.
+# WHY: Keep true unless you’ve deployed RFC2307 attributes (uidNumber/gidNumber) in AD.
+
+ad_site: ""
+# WHAT: Optional AD site hint (e.g., "LondonSite").
+# WHY: Helps DC selection in multi-site deployments.
+
+# ---------------- LDAP-specific options (used when sssd_provider: "ldap") --
+ldap_uri: "ldaps://ldap.testing.test"
+# WHAT: LDAP server URI (use ldaps:// for TLS).
+# WHERE TO GET: From LDAP team.
+
+ldap_search_base: "dc=testing,dc=test"
+# WHAT: Base DN for users/groups lookups.
+
+ldap_tls_reqcert: "demand"
+# WHAT: TLS server cert verification policy: never/allow/try/demand/hard.
+# WHY: "demand" is recommended; adjust only during bring-up.
+
+ldap_tls_cacert: "/etc/pki/ca-trust/source/anchors/corp-root-ca.pem"
+# WHAT: Path to the CA cert that signed the LDAP/AD TLS cert.
+# WHERE TO GET: From PKI team; deploy via your config management before enabling TLS.
+
+# Optional: If your LDAP stores uidNumber/gidNumber (RFC2307)
+ldap_schema: "rfc2307"
+# WHAT: Schema type for LDAP.
+# WHY: Set to "rfc2307bis" if you use memberOf on groups; ignore for AD provider.
+
+# ---------------- Access control (simple baseline) -------------------------
+sssd_access_provider: "simple"
+# WHAT: Access control backend ("simple", "ad", or "ldap").
+# WHY: "simple" lets you whitelist users/groups quickly; switch to "ad" once ready.
+
+sssd_simple_allow_users: ["root"]
+# WHAT: Local whitelist for initial access (add your admin break-glass users here).
+# WHY: Prevents lockout during first joins/tests.
+
+sssd_simple_allow_groups: []
+# WHAT: Optional group whitelist.
+
+
+# --- CERTMAP (for DISA STIG-visible certificate mapping) -------------------
+
+# A certmap tells SSSD:
+#   (1) which directory "domain" to search,
+#   (2) which certificates to accept,
+#   (3) how to find the ONE user that owns the presented certificate.
+
+# (1) DIRECTORY DOMAIN(S) TO SEARCH
+certmap_domain_id: "testing.test"
+# WHAT: Exact SSSD domain ID (the name inside [domain/<ID>] in /etc/sssd/sssd.conf).
+# WHERE TO GET: From the AD/LDAP team.
+
+certmap_search_domains: ["testing.test"]
+# WHAT: Additional search domains names SSSD will search for the user.
+# WHERE TO GET: From the AD/LDAP team; include trusted domains only if you must search them.
+
+# (2) WHICH CERTIFICATES TO ACCEPT
+certmap_matchrule: "<SAN>.*EDIPI@mil"
+# WHAT: Acceptance filter for certs (match on SAN/UPN/email, Issuer DN, EKU, etc.; you can combine with &&).
+# WHERE TO GET: From the PKI/certificate team; verify by inspecting a sample user cert.
+# ---------------------------------------------------------------------------
+# Common, valid MATCHRULE examples (paste ONE into certmap_matchrule)
+# - Issuer DN is exactly your corporate CA:
+#   "<ISSUER>^CN=Corp-CA,DC=example,DC=com$"
+# - Must have client authentication EKU:
+#   "<EKU>clientAuth"
+# - AD UPN in SAN ends with your realm:
+#   "<SAN:ntPrincipalName>.*@EXAMPLE\.COM"
+# - Email in SAN is your mail domain:
+#   "<SAN:rfc822Name>.*@example\.com"
+# - Stricter combo (Issuer + EKU + UPN SAN):
+#   "<ISSUER>^CN=Corp-CA,DC=example,DC=com$&&<EKU>clientAuth&&<SAN:ntPrincipalName>.*@EXAMPLE\.COM"
+
+# (3) HOW TO MAP CERT → USER ACCOUNT
+certmap_maprule: "(userCertificate;binary={cert!bin})"
+# WHAT: LDAP filter rule that turns an accepted cert into a specific directory user.
+# WHERE TO GET: From the AD/LDAP team (confirm which user attribute is populated and supported).
+# WHY: If this doesn’t match how your directory stores/identifies users, logins will fail.
+# Common, valid MAPRULE examples (paste ONE into certmap_maprule)
+# - Exact certificate match (directory stores full cert on users):
+#   "(userCertificate;binary={cert!bin})"
+# - Derive identity from SAN UPN (works well with AD):
+#   "(|(userPrincipalName={subject_nt_principal})(sAMAccountName={subject_nt_principal.short_name}))"
+# - Derive identity from SAN email:
+#   "(|(mail={subject_rfc822_name})(uid={subject_rfc822_name.short_name}))"
+# - FreeIPA-style mapping using issuer/subject DNs:
+#   "(ipaCertMapData=X509:<I>{issuer_dn!ad}<S>{subject_dn!ad})"
+
+# label only
+certmap_rule_name: "rule_4_DISA_STIG"
+# WHAT: A short label for this mapping rule.
+
+
