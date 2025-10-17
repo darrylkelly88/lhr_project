@@ -24,7 +24,6 @@
     owner: root
     group: root
     mode: "0600"
-  notify: Restart sssd
 
 - name: Validate SSSD configuration
   ansible.builtin.command: sssctl config-check
